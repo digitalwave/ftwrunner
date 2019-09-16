@@ -1,0 +1,4 @@
+* implement raw_request
+* implement encoded_request
+* refactorize code
+* adding debug levels

@@ -1,0 +1,13 @@
+Makefile.in
+Makefile
+src/Makefile.in
+Makefile
+autom4te.cache/
+config.status
+config.log
+Makefile
+src/.deps
+src/Makefile
+src/ftwrunner
+src/ftwrunner-main.o
+
