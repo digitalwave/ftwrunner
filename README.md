@@ -8,7 +8,7 @@ Motivation
 
 I help to maintain the code of [ModSecurity](https://www.modsecurity.org) (especially the [libmodsecurity3](https://github.com/SpiderLabs/ModSecurity)). A most important goal that get the state that the [CRS](https://coreruleset.org) can work together with libmodsecurity3, without errors: false positives and not working rules.
 
-[CRS](https://github.com/SpiderLabs/owasp-modsecurity-crs) has a very good tool to test all of the rules, it's called [ftw](https://github.com/CRS-support/ftw), but it works only with the Apache webserver - and consequently a HTTP server is required. Ftw uses [set of tests](https://github.com/SpiderLabs/owasp-modsecurity-crs/tree/v3.2/dev/util/regression-tests/tests), which are divided to different sections, represented the attack type. Each section has a multiple test files, which represented the rules: every file named by the rule id. And finally, all ruleset has one or more test.
+[CRS](https://github.com/SpiderLabs/owasp-modsecurity-crs) has a very good tool to test all of the rules, it's called [ftw](https://github.com/CRS-support/ftw), but it works only with the Apache webserver - consequently a HTTP server is required. Ftw uses [sets of tests](https://github.com/SpiderLabs/owasp-modsecurity-crs/tree/v3.2/dev/util/regression-tests/tests), which are divided to different sections, represented the attack type. Each section has a multiple test files, which represented the rules: every file named by the rule id. And finally, all ruleset has one or more test.
 
 These tests had written in [YAML](https://yaml.org/) format.
 
@@ -26,7 +26,7 @@ That is why this tool was created.
 Prerequisites
 =============
 
-`ftwrunner` was designed to run on Linux, but I think it runs most Unix systems.
+`ftwrunner` was designed to run on Linux, but I think it runs on most Unix systems.
 
 To build the `ftwrunner`, you need:
 
@@ -150,6 +150,10 @@ With the command line options you can overwrite the two mandatory options above,
 ```
 $ ./ftwrunner -r 942210
 ```
+
+Note, that these argument lists are equals:
+
+`$ ./ftwrunner -f /path/to/942210.yaml` and `$ ./ftwrunner -f /path/to -r 942210`, so if you passed a regular file, `ftwrunner` set it up as ruleid.
 
 `-t test_title` - if you want to run only one test case for a rule, not the whole set, just pass this argument. Note, that you can use this only with `-r`. Example:
 
