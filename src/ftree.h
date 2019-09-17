@@ -28,6 +28,8 @@ class Ftree {
         std::vector<std::string> filelist;
         Ftree(std::string path, std::string ruleset);
         void walk();
+        bool arg_is_file = false;
+        std::string arg_file_name;
     private:
         void addfile(std::string fname);
         std::string path;
@@ -53,6 +55,9 @@ void Ftree::addfile(std::string fname) {
         if (basename.substr(basename.size()-4, basename.size()-1) == "yaml") {
             // "/911100.yaml -> 911100"
             rulesetname = basename.substr(1, basename.size()-6);
+            if (arg_is_file == true) {
+                arg_file_name = rulesetname;
+            }
             if (sruleset == "" || sruleset == rulesetname) {
                 filelist.push_back(fname);
             }
@@ -73,6 +78,7 @@ void Ftree::walk() {
     }
     // path is regular file
     else if ((dirpath.st_mode & S_IFMT) == S_IFREG) {
+        arg_is_file = true;
         addfile(spath);
     }
     // iterates the directory list, during extend it if dound a subdir

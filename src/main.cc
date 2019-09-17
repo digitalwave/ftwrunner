@@ -125,6 +125,13 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    // get the list of yaml test files, run the tests
+    Ftree ftree(ftwtest_root, ruleset_to_run_cli);
+    ftree.walk();
+    if (ftree.arg_is_file == true && ftree.arg_file_name != "") {
+        ruleset_to_run_cli = ftree.arg_file_name;
+    }
+
     if (test_to_run_cli != "" && ruleset_to_run_cli == "") {
         std::cout << "Test number could pass only when ruleset passed!" << std::endl;
         return -1;
@@ -143,9 +150,6 @@ int main(int argc, char **argv) {
         return rc;
     }
 
-    // get the list of yaml test files, run the tests
-    Ftree ftree(ftwtest_root, ruleset_to_run_cli);
-    ftree.walk();
     // create a Runner instance, iterate the tests
     Runner runner(modsec, rules, test_whitelist);
     for(auto f: ftree.filelist) {
