@@ -20,7 +20,7 @@
 #include "ftree.h"
 #include "runner.h"
 
-#define READYAMLCONF(config)         try { \
+#define READYAMLCONF(config)         if (stat(config, &confstat) == 0) { \
             YAML::Node runnerconf = YAML::LoadFile(config); \
             READSTRING(runnerconf, modsecurity_config); \
             READSTRING(runnerconf, ftwtest_root); \
@@ -30,11 +30,6 @@
                     test_whitelist.insert(w); \
                 } \
             } \
-        } \
-        catch (YAML::BadFile &) { \
-            std::cout << "Can't open file: " << config << std::endl; \
-            showhelp(); \
-            return -1; \
         }
 
 #define CHECKARG(arg, sw, st)  if(std::string(arg) == #sw) { state = #st; }
@@ -81,6 +76,7 @@ int main(int argc, char **argv) {
     std::string ruleset_to_run_cli = "";
     std::string state = "";
     bool debug = false;
+    struct stat confstat;
 
     READYAMLCONF(FTWRUNNER_YAML);
     if (argc > 1) {
@@ -94,7 +90,7 @@ int main(int argc, char **argv) {
                 return 0;
             }
 
-            if (state == "rconf") { READYAMLCONF(argv[a]); state = ""; }
+            if (state == "rconf") { READYAMLCONF(argv[a]) else { std::cout << "Can't open file: " << argv[a] << std::endl; return -1; }; state = ""; }
             if (state == "msconf") { modsecurity_config_cli = std::string(argv[a]); state = ""; }
             if (state == "ftconf") { ftwtest_root_cli = std::string(argv[a]); state = ""; }
             if (state == "test") { test_to_run_cli = std::string(argv[a]); state = ""; }
