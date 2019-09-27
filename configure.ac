@@ -11,12 +11,26 @@ AC_CONFIG_HEADERS([config.h])
 AC_PROG_CXX
 AC_PROG_CC
 
-# Checks for libraries.
-AC_CHECK_LIB([modsecurity], [msc_init])
-AC_CHECK_LIB([pcre], [pcre_compile])
-AC_CHECK_LIB([yaml-cpp], [YAML::Load])
-
 # Checks for header files.
+
+AC_CHECK_HEADERS([modsecurity/modsecurity.h], [], [AC_MSG_ERROR([unable to find header modsecurity/modsecurity.h], 1)])
+AC_CHECK_HEADERS([pcre.h], [], [AC_MSG_ERROR([unable to find header pcre.h], 1)])
+
+# Checks for libraries.
+AC_CHECK_LIB([modsecurity], [msc_init], [], AC_MSG_ERROR([libmodsecurity is not installed.], 1))
+AC_CHECK_LIB([pcre], [pcre_compile], [], AC_MSG_ERROR([libpcre is not installed.], 1))
+HAVE_YAMLCPP=0
+AC_LANG(C++)
+SAVED_LDFLAGS=$LDFLAGS
+SAVED_LIBS=$LIBS
+LDFLAGS="$LDFLAGS -lyaml-cpp"
+LIBS="$LIBS -lyaml-cpp"
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM([#include <yaml-cpp/yaml.h>],
+    [YAML::Load("[1, 2, 3]")])],
+  [HAVE_YAMLCPP=1],
+  [AC_MSG_ERROR([libyaml-cpp is not installed.], 1)])
+LDFLAGS=$SAVED_LDFLAGS
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL

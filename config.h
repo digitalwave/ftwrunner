@@ -10,11 +10,14 @@
 /* Define to 1 if you have the `pcre' library (-lpcre). */
 #define HAVE_LIBPCRE 1
 
-/* Define to 1 if you have the `yaml-cpp' library (-lyaml-cpp). */
-/* #undef HAVE_LIBYAML_CPP */
-
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
+
+/* Define to 1 if you have the <modsecurity/modsecurity.h> header file. */
+#define HAVE_MODSECURITY_MODSECURITY_H 1
+
+/* Define to 1 if you have the <pcre.h> header file. */
+#define HAVE_PCRE_H 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -38,7 +41,7 @@
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if the system has the type `_Bool'. */
-#define HAVE__BOOL 1
+/* #undef HAVE__BOOL */
 
 /* Name of package */
 #define PACKAGE "ftwrunner"
