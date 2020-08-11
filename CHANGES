@@ -3,6 +3,7 @@ v0.2 - YYYY-MM-DD
   * Resolved the missing default config error
   * Recognize the test, set it to ruleset if it's a file
   * Fixed libraries and headers checking in autotools related files
+  * Added libmodsecurity3 API changes
 
 v0.1 - 2019-09-15
 -----------------

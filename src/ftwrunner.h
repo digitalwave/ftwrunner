@@ -6,7 +6,19 @@
 #include <yaml-cpp/yaml.h>
 
 #include <modsecurity/modsecurity.h>
+
+#ifdef MODSECURITY_CHECK_VERSION
+#if MODSECURITY_VERSION_NUM >= 304010
+#define MSC_USE_RULES_SET 1
+#endif
+#endif
+
+#ifdef MSC_USE_RULES_SET
+#include <modsecurity/rules_set.h>
+#else
 #include <modsecurity/rules.h>
+#endif
+
 #include <modsecurity/rule_message.h>
 #include <modsecurity/transaction.h>
 

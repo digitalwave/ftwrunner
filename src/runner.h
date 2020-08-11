@@ -36,7 +36,11 @@
 
 class Runner {
     public:
+#ifdef MSC_USE_RULES_SET
+        Runner(modsecurity::ModSecurity * modsec, modsecurity::RulesSet * rule, std::set<std::string> whitelist);
+#else
         Runner(modsecurity::ModSecurity * modsec, modsecurity::Rules * rule, std::set<std::string> whitelist);
+#endif
         int runtests(std::string, std::string, bool);
         unsigned int cnt_passed = 0;
         unsigned int cnt_failed = 0;
@@ -48,7 +52,11 @@ class Runner {
         std::vector<std::string> whitelisted_passed_list;
     private:
         modsecurity::ModSecurity *modsec;
+#ifdef MSC_USE_RULES_SET
+        modsecurity::RulesSet * rules;
+#else
         modsecurity::Rules * rules;
+#endif
         void hexchar(unsigned char, unsigned char &, unsigned char &);
         void fancy_print(std::string, int, const char *, int);
         std::string urlencode(std::string);
@@ -59,7 +67,11 @@ class Runner {
         std::set<std::string> whitelist;
 };
 
+#ifdef MSC_USE_RULES_SET
+Runner::Runner(modsecurity::ModSecurity *arg_modsec, modsecurity::RulesSet * arg_rules, std::set<std::string> arg_whitelist) {
+#else
 Runner::Runner(modsecurity::ModSecurity *arg_modsec, modsecurity::Rules * arg_rules, std::set<std::string> arg_whitelist) {
+#endif
     modsec = arg_modsec;
     rules = arg_rules;
     whitelist = arg_whitelist;
@@ -418,7 +430,7 @@ int Runner::runtests(std::string infile, std::string testid, bool debug) {
             // phase 5
             trans->processResponseBody();
             trans->intervention(it);
-    
+
             delete trans;
 
             loggerlock.lock();
@@ -427,7 +439,7 @@ int Runner::runtests(std::string infile, std::string testid, bool debug) {
             pcre *re = NULL;
             pcre_extra *ree = NULL;
             int ovector[OVECSIZE];
-    
+
             if (log_contains != "") {
                 re = pcre_compile(log_contains.c_str(), PCRE_DOTALL|PCRE_MULTILINE, &re_err_ptr, &re_err_offset, NULL);
                 checkmod = 1;

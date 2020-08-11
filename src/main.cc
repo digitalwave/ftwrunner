@@ -65,7 +65,11 @@ void showhelp() {
 int main(int argc, char **argv) {
 
     modsecurity::ModSecurity *modsec;
+#ifdef MSC_USE_RULES_SET
+    modsecurity::RulesSet *rules;
+#else
     modsecurity::Rules *rules;
+#endif
     int rc;
     std::string modsecurity_config = "";
     std::string ftwtest_root = "";
@@ -137,18 +141,23 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // create ModSec instance
-    modsec = new modsecurity::ModSecurity();
-    // set the callback function for logging - see the possible arguments behind the comment
-    modsec->setServerLogCb(logCbText); //, modsecurity::RuleMessageLogProperty); // | modsecurity::IncludeFullHighlightLogProperty);
     // create a Rule instance
+#ifdef MSC_USE_RULES_SET
+    rules = new modsecurity::RulesSet();
+#else
     rules = new modsecurity::Rules();
+#endif
     // load config
     rc = rules->loadFromUri(modsecurity_config.c_str());
     if (rc < 0) {
         std::cout << "Can't load rules: " << rules->m_parserError.str() << std::endl;
         return rc;
     }
+
+    // create ModSec instance
+    modsec = new modsecurity::ModSecurity();
+    // set the callback function for logging - see the possible arguments behind the comment
+    modsec->setServerLogCb(logCbText); //, modsecurity::RuleMessageLogProperty); // | modsecurity::IncludeFullHighlightLogProperty);
 
     // create a Runner instance, iterate the tests
     Runner runner(modsec, rules, test_whitelist);
