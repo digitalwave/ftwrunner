@@ -1,10 +1,20 @@
 Makefile
+Makefile.in
+*/Makefile.in
+*/Makefile
 autom4te.cache/
+build-aux
 config.status
 config.log
 Makefile
 src/.deps
 src/Makefile
+*.o
+config.h
+configure
+.deps
+.dirstamp
 src/ftwrunner
-src/ftwrunner-main.o
+src/yamltest
+
 

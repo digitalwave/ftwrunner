@@ -2,6 +2,10 @@
  * This file is part of the ftwrunner distribution (https://github.com/digitalwave/ftwrunner).
  * Copyright (c) 2022 digitalwave and Ervin Hegedüs.
  *
+ * Except base64_decode
+ * Copyright (c) 2005-2011, Jouni Malinen <j@w1.fi>
+ *
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, version 3.
@@ -16,30 +20,16 @@
  */
 
 //
-// ftwrunner.h
-// macros for ftwrunner
-//
+// ftwtestutils.h
+// helper functions for tests
 
-#ifndef _FTWRUNNER_H_
-#define _FTWRUNNER_H_
+#ifndef FTWTE_UTILS_H
+#define FTWTE_UTILS_H
 
-#define PRGNAME "ftwrunner"
-#define FTWRUNNER_YAML "ftwrunner.yaml"
-
-#define FTW_FREE_STRING(p) { \
-        if(p != NULL) { \
-            free(p); \
-            p = NULL; \
-        } \
-    }
-#define FTW_FREE_STRINGLIST(p) { \
-        if (p != NULL) { \
-            int i = 0; \
-            while(p[i] != NULL) { \
-                free(p[i++]); \
-            } \
-            free(p); \
-        } \
-    }
+void            hexchar(unsigned char c, unsigned char *hex1, unsigned char *hex2);
+char          * urlencode(const char * s);
+char          * unquote(char * src);
+void            parse_qs(char * q, char **** parsed, int * parsed_count);
+unsigned char * base64_decode(const unsigned char *src, size_t len, size_t *out_len);
 
 #endif

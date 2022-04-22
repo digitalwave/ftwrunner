@@ -16,30 +16,16 @@
  */
 
 //
-// ftwrunner.h
-// macros for ftwrunner
-//
+// ftwdummy.v
+// dummy WAF engine for testing
 
-#ifndef _FTWRUNNER_H_
-#define _FTWRUNNER_H_
+#include <string.h>
+#include "ftwdummy.h"
 
-#define PRGNAME "ftwrunner"
-#define FTWRUNNER_YAML "ftwrunner.yaml"
+// run a transaction
+// a stage contains a transaction
+int ftw_engine_runtest_dummy(ftw_engine * engine, char * title, ftw_stage *stage, int debug) {
 
-#define FTW_FREE_STRING(p) { \
-        if(p != NULL) { \
-            free(p); \
-            p = NULL; \
-        } \
-    }
-#define FTW_FREE_STRINGLIST(p) { \
-        if (p != NULL) { \
-            int i = 0; \
-            while(p[i] != NULL) { \
-                free(p[i++]); \
-            } \
-            free(p); \
-        } \
-    }
-
-#endif
+    logCbText(NULL, "This is just a test log entry from dummy engine.");
+    return FTW_TEST_PASS;
+}

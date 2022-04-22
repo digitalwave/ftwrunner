@@ -1,9 +1,17 @@
-AM_CXXFLAGS = -Wall -g -O0 -std=c++11 -fPIC
+AM_CFLAGS = -Wall -g -O0
 
-bin_PROGRAMS = ftwrunner
-ftwrunner_SOURCES = main.cc
-ftwrunner_CXXFLAGS = $(AM_CXXFLAGS)
+bin_PROGRAMS = ftwrunner yamltest
+ftwrunner_SOURCES = main.c yamlapi.c walkdir.c ftwtest.c ftwtestutils.c \
+                    engines/engines.c \
+                    engines/ftwdummy/ftwdummy.c \
+                    engines/ftwmodsecurity/ftwmodsecurity.c \
+                    engines/ftwcoraza/ftwcoraza.c
+ftwrunner_CFLAGS = $(AM_CFLAGS)
+ftwrunner_LDADD = @LIBMODSECURITY_LIB@ @LIBCORAZA_LIB@ @LIBPCRE_LIB@
 
-LDADD =  -lyaml-cpp
+yamltest_SOURCES = yamltest.c yamlapi.c
+yamltest_CFLAGS = $(AM_CFLAGS)
+
+LDADD =  -lyaml
 
 

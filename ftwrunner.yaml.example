@@ -1,14 +1,42 @@
-modsecurity_config: /etc/apache2/modsecurity_includes.conf
-ftwtest_root: /path/to/owasp-modsecurity-crs/util/regression-tests/tests
+modsecurity_config: modsecurity_includes.conf
+ftwtest_root: /path/to/coreruleset/test/regression/tests
 test_whitelist:
-- 941190-3 # known MSC bug - PR #2023 (Cookie without value)
-- 941330-1 # know MSC bug - #2148 (double escape)
-- 942480-2 # known MSC bug - PR #2023 (Cookie without value)
-- 944100-11 # known MSC bug - PR #2045, ISSUE #2146
+- 920181-1
+- 921180-2
+- 921180-5
+- 932200-13
+- 942131-3
+- 942131-5
+- 942131-7
+- 944100-11
 - 944100-12
 - 944100-15
 - 944100-16
-- 944110-11 # known MSC bug - PR #2045, ISSUE #2146
+- 944110-11
 - 944110-12
 - 944110-15
 - 944110-16
+- 944120-107
+- 944120-108
+- 944120-124
+- 944120-125
+- 944120-22
+- 944120-23
+- 944120-39
+- 944120-40
+- 944120-5
+- 944120-56
+- 944120-57
+- 944120-6
+- 944120-73
+- 944120-74
+- 944120-90
+- 944120-91
+- 944210-22
+- 944210-23
+- 944210-39
+- 944210-40
+- 944210-5
+- 944210-6
+- 980170-0
+- 980170-1

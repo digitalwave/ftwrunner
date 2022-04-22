@@ -23,6 +23,8 @@ Then the idea came - use the API, but not through the HTTP: inject the existing 
 
 That is why this tool was created.
 
+In version v1.0 I added [Coraza](https://github.com/corazawaf/coraza) support too, through [libcoraza](https://github.com/corazawaf/libcoraza), and I completely rewrited the whole tool in pure C.
+
 Prerequisites
 =============
 
@@ -30,20 +32,21 @@ Prerequisites
 
 To build the `ftwrunner`, you need:
 
-+ a **C++ compiler**, I used **g++**
++ a **C compiler**, I used **gcc**
 + **autotools**, **make**
 + of course, need the compiled and installed **libmodsecurity3**
++ and/or **coraza** and **librcoraza**
 + **pcre** - the old version
-+ **yaml-cpp**
++ **libyaml**
 
 You have to install them on Debian with this command:
 
 ```
-sudo apt install g++ make autotools libpcre3-dev libyaml-cpp-dev
+sudo apt install gcc make autotools libpcre3-dev libyaml-dev
 ```
-and - as I wrote above - an installed libmodsecurity3.
+and - as I wrote above - an installed libmodsecurity3 and/or libcoraza.
 
-*Note: Debian 10 contains the libmodsecurity3 package, but since it released, there are so much modification in the code, so I **strongly suggest** that you get a clone with git, and compile it for yourself.*
+*Note: Debian 10 and Debian 11 contains the libmodsecurity3 package, but since it released, there are so much modification in the code, so I **strongly suggest** that you get a clone with git, and compile it for yourself. Optionally, you can use our Debian repository: [https://modsecurity.digitalwave.hu](https://modsecurity.digitalwave.hu)*
 
 Compile the code
 ================
@@ -51,9 +54,31 @@ Compile the code
 It's simple, grab the code, and type this commands:
 
 ```
-$ autoreconf    # optional
-$ ./autogen.sh  # optional, but necessary if you run autoreconf
+$ autoreconf --install
 $ ./configure
+```
+
+At the and of `./configure`, you will get a report:
+
+```
+----------------------------------------------------------------------
+
+ ftwrunner Version 1.0 configuration:
+
+ OS Type        Linux
+ Prefix         /usr/local
+ Preprocessor   gcc -E 
+ C Compiler     gcc -g -O2
+ Engines:
+    modsecurity  yes
+    coraza       yes
+
+-----------------------------------------------------------------------
+```
+
+Then type
+
+```
 $ make
 ```
 
@@ -94,29 +119,48 @@ If you run `ftwrunner`, it's also try to open this file first, and if it done, u
 Content of config file
 ----------------------
 
-`modsecurity_config` - path to your modsecurity.conf, what you use for your webserver. You can make a copy from that file, and can make some modification. Here is the part of mine:
-```
-$ cat /etc/apache2/modsecurity_includes.conf 
-Include modsecurity.conf
-Include /etc/modsecurity/crs/crs-setup.conf
-Include /etc/modsecurity/crs/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
-Include /usr/share/modsecurity-crs/rules/REQUEST-901-INITIALIZATION.conf
-Include /usr/share/modsecurity-crs/rules/REQUEST-903.9001-DRUPAL-EXCLUSION-RULES.conf
-...
-```
-**IMPORTANT: if you set up the debug in that config (`SecDebugLog /var/log/apache2/modsec_debug.log`), libmodsecurity3 wants to open it when it starts, so you have to give the permissions to the user what you run, or use a copy and change this variable, or turn off debug log. No, you don't want to run it as root.**
+I suppose you use separated config files, at least your WAF config. When `ftwrunner` runs, it reads the whole config as your web server, so if your debug.log/audit.log is turned on, `ftwrunner` also wants to write it.
 
-You can overwrite this variable with cli argument `-m /path/to/config`.
+The best what you can do is make a single config file what you pass to `ftwrun`, and through that file the runner includes the other ones. This config file can be `modsecurity_includes.conf`.
 
-`ftwtest_root` - path to your regression tests root directory. It's depend on your config, version, etc... and also can be overwriten with a cli argument `-f /path/to/owasp-modsecurity-crs/util/regression-tests/tests`.
+Make a copy of your `modsecurity.conf` or `coraza.conf`. Make any modifications what you want (turn on/off the logs, change the log paths, and so on.)
+
+Put the name of this file into `modsecurity_includes.conf`:
+
+```
+include modsecurity.conf
+# or
+include coraza.conf
+```
+
+Then find the file which loads your CRS setup file, before and after loaders, and the rules. Put that file too into the `modsecurity_includes.conf`. Now your file looks like this:
+
+```
+$ cat modsecurity_includes.conf 
+include modsecurity.conf
+include /path/to/coreruleset/owasp-crs.load
+```
+
+and my `owasp-crs.load` contains:
+
+```
+include /path/to/coreruleset/crs-setup.conf
+include /path/to/crs/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
+include /path/to/coreruleset/rules/*.conf
+include /path/to/crs/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
+```
+
+**AGAIN: if you set up the debug in that config (`SecDebugLog /var/log/nginx/modsec_debug.log`), libmodsecurity3 wants to open it when it starts, so you have to give the permissions to the user what you run, or use a copy and change this variable, or turn off debug log. No, you don't want to run it as root.**
+
+**Also please make sure if you copy your `modsecurity.conf`, that you copy the `unicode.mapping` file too.**
+
+You can overwrite the `modsecurity_config: modsecurity_include.conf` variable with cli argument `-m /path/to/config`.
+
+`ftwtest_root` - path to your regression tests root directory. It's depend on your config, version, etc... and also can be overwriten with a cli argument `-f /path/to/coreruleset/tests/regression/tests`.
 
 Note, that it's generally useful if you don't want to run all tests in that directory, just a subset. Here is an example:
 ```
-$ ./ftwrunner -f /path/to/owasp-modsecurity-crs/util/regression-tests/tests/REQUEST-920-PROTOCOL-ENFORCEMENT/
-```
-or you can pass only one rule:
-```
-$ ./ftwrunner -f /path/to/owasp-modsecurity-crs/util/regression-tests/tests/REQUEST-920-PROTOCOL-ENFORCEMENT/920210.yaml
+$ ./ftwrunner -f //path/to/coreruleset/tests/regression/tests/REQUEST-920-PROTOCOL-ENFORCEMENT/
 ```
 
 `test_whitelist` - this is **not** a mandatory option, but can be useful to lists the tests titles, what you know that will FAILED. You can place a comment after the test title with a `#`, see example:
@@ -162,6 +206,8 @@ $ ./ftwrunner -r 942380 -t 20
 ```
 
 this command will run the test only for rule id `942380` with test title `942380-20`. The value of this argument need to match exactly as the title after `-` sign. If the title ends with `...-1FP`, you have to pass `-t 1FP`. Note, that this argument can be used only **with** the `-r ruleid`. Without `-r` it makes no sense.
+
+`-e engine` - sets the engine. Available engines are `dummy` (default), `modsecurity` and `coraza`. The `modsecurity` and `coraza` engines are options only if the build flow finds the libraries.
 
 `-d` - turn on the debug mode. This means, if a test FAILED, `ftwrunner` shows the error log immediately below the test line, what you would see in your webserver's error.log.
 

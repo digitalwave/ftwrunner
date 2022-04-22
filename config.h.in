@@ -1,16 +1,22 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to 1 if you have the <coraza/core.h> header file. */
+#undef HAVE_CORAZA_CORE_H
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the `modsecurity' library (-lmodsecurity). */
-#undef HAVE_LIBMODSECURITY
+/* Define to 1 if you have the `libcorazacore' library (-lcorazacore). */
+#undef HAVE_LIBCORAZA
 
-/* Define to 1 if you have the `pcre' library (-lpcre). */
-#undef HAVE_LIBPCRE
+/* Define to 1 if you have the `yaml' library (-lyaml). */
+#undef HAVE_LIBYAML
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `modsecurity' library (-lmodsecurity). */
+#undef HAVE_MODSECURITY
 
 /* Define to 1 if you have the <modsecurity/modsecurity.h> header file. */
 #undef HAVE_MODSECURITY_MODSECURITY_H
@@ -39,8 +45,8 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to 1 if the system has the type `_Bool'. */
-#undef HAVE__BOOL
+/* Define to 1 if you have the <yaml.h> header file. */
+#undef HAVE_YAML_H
 
 /* Name of package */
 #undef PACKAGE

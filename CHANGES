@@ -1,3 +1,9 @@
+v1.0 - YYYY-MM-DD
+-----------------
+
+  * Completely rewritten the whole tool in pure C
+  * Added engines support: dummy and coraza
+
 v0.2 - YYYY-MM-DD
 -----------------
   * Resolved the missing default config error

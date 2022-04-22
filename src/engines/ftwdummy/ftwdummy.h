@@ -16,30 +16,14 @@
  */
 
 //
-// ftwrunner.h
-// macros for ftwrunner
-//
+// ftwdummy.h
+// dummy WAF engine for testing
 
-#ifndef _FTWRUNNER_H_
-#define _FTWRUNNER_H_
+#include "../engines.h"
 
-#define PRGNAME "ftwrunner"
-#define FTWRUNNER_YAML "ftwrunner.yaml"
+#ifndef FTW_ENGINE_DUMMY
+#define FTW_ENGINE_DUMMY
 
-#define FTW_FREE_STRING(p) { \
-        if(p != NULL) { \
-            free(p); \
-            p = NULL; \
-        } \
-    }
-#define FTW_FREE_STRINGLIST(p) { \
-        if (p != NULL) { \
-            int i = 0; \
-            while(p[i] != NULL) { \
-                free(p[i++]); \
-            } \
-            free(p); \
-        } \
-    }
+int ftw_engine_runtest_dummy(ftw_engine * engine, char * title, ftw_stage *stage, int debug);
 
 #endif

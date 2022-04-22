@@ -16,30 +16,25 @@
  */
 
 //
-// ftwrunner.h
-// macros for ftwrunner
-//
+// ftwcoraza.h
+// Coraza WAF engine for testing
 
-#ifndef _FTWRUNNER_H_
-#define _FTWRUNNER_H_
+#include "../engines.h"
 
-#define PRGNAME "ftwrunner"
-#define FTWRUNNER_YAML "ftwrunner.yaml"
+#ifndef FTW_ENGINE_CORAZA
+#define FTW_ENGINE_CORAZA
+#ifdef HAVE_LIBCORAZA
 
-#define FTW_FREE_STRING(p) { \
-        if(p != NULL) { \
-            free(p); \
-            p = NULL; \
-        } \
-    }
-#define FTW_FREE_STRINGLIST(p) { \
-        if (p != NULL) { \
-            int i = 0; \
-            while(p[i] != NULL) { \
-                free(p[i++]); \
-            } \
-            free(p); \
-        } \
-    }
+#include <coraza/core.h>
+#include <coraza/utils.h>
 
+#define N_INTERVENTION_STATUS 200
+
+void * ftw_engine_init_coraza();
+void * ftw_engine_create_rules_set_coraza(void * engine_instance, char * main_rule_uri, const char ** error);
+int    ftw_engine_runtest_coraza(ftw_engine * engine, char * title, ftw_stage *stage, int debug);
+
+void   ftw_engine_cleanup_coraza(void * waf);
+
+#endif
 #endif
