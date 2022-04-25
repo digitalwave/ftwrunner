@@ -33,6 +33,7 @@
 #else
 #include <modsecurity/rules.h>
 #endif
+#endif
 
 #ifdef HAVE_LIBCORAZA
 #include <coraza/core.h>
@@ -43,7 +44,6 @@
 #include "ftwmodsecurity/ftwmodsecurity.h"
 #include "ftwdummy/ftwdummy.h"
 
-#endif
 
 static char **loglines = NULL;
 static int loglines_count = 0;
