@@ -488,14 +488,14 @@ ftwtestcollection *ftwtestcollection_new(yaml_item * yroot, char * rule_id, char
                                                     stage->output->response_len = strlen(response_ok);
                                                     stage->output->response_code = 200;
                                                 }
-                                                else if (strcmp(stage->input->uri, "/anything") != 0 && strncmp(stage->input->uri, "/base64/", 8) != 0) {
+                                                else if (strcmp(stage->input->uri, "/anything") != 0 && strncmp(stage->input->uri, "/base64/", 8) != 0 && strcmp(stage->input->uri, "/post") != 0) {
                                                     stage->output->response = calloc(strlen(response_404)+1, sizeof(char));
                                                     strcpy(stage->output->response, response_404);
                                                     stage->output->response_len = strlen(response_404);
                                                     stage->output->response_code = 404;
                                                 }
                                                 else {
-                                                    if (stage->input->data != NULL && strcmp(stage->input->uri, "/anything") == 0) {
+                                                    if (stage->input->data != NULL && (strcmp(stage->input->uri, "/anything") == 0 || strcmp(stage->input->uri, "/post") == 0)) {
                                                         stage->output->response = calloc(strlen(stage->input->data)+1, sizeof(char));
                                                         strcpy(stage->output->response, stage->input->data);
                                                         stage->output->response_len = strlen(stage->input->data);
