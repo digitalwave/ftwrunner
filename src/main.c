@@ -159,16 +159,16 @@ strcpy(available_engines[engine_count++], "coraza");
     else {
         yaml_item *titem;
         if (ftwtest_root == NULL) {
-            if (yaml_item_get_value_by_key(yroot, (const char *)"ftwtest_root", &titem) == YAML_KEYSEARCH_FOUND) {
+            if (yaml_item_get_value_by_key(yroot, (const char *)"ftwtest_root", &titem) == YAML_KEYSEARCH_FOUND && titem->type == YAML_VALTYPE_STRING) {
                 ftwtest_root = strdup(titem->value.sval);
             }
         }
         if (modsecurity_config == NULL) {
-            if (yaml_item_get_value_by_key(yroot, (const char *)"modsecurity_config", &titem) == YAML_KEYSEARCH_FOUND) {
+            if (yaml_item_get_value_by_key(yroot, (const char *)"modsecurity_config", &titem) == YAML_KEYSEARCH_FOUND && titem->type == YAML_VALTYPE_STRING) {
                 modsecurity_config = strdup(titem->value.sval);
             }
         }
-        if (yaml_item_get_value_by_key(yroot, (const char *)"test_whitelist", &titem) == YAML_KEYSEARCH_FOUND) {
+        if (yaml_item_get_value_by_key(yroot, (const char *)"test_whitelist", &titem) == YAML_KEYSEARCH_FOUND && titem->type == YAML_VALTYPE_LIST) {
             int i;
             test_whitelist = calloc(titem->value.list->length+1, sizeof(char *));
             for (i = 0; i < titem->value.list->length; i++) {
