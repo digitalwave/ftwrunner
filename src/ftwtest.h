@@ -35,6 +35,15 @@ typedef struct ftw_header_t {
     char *value;
 } ftw_header;
 
+typedef struct ftw_log_t {
+    unsigned int   *expect_ids;
+    unsigned int    expect_ids_len;
+    unsigned int   *no_expect_ids;
+    unsigned int    no_expect_ids_len;
+    char           *match_regex;
+    char           *no_match_regex;
+} ftw_log;
+
 typedef struct ftw_input_t {
     char           *dest_addr;
     unsigned int    port;
@@ -47,6 +56,7 @@ typedef struct ftw_input_t {
     char           *data;
     int             save_cookie;
     int             stop_magic;
+    ybool           autocomplete_headers;
     char           *encoded_request;
     char           *raw_request;
     int             is_sent_header_content_type;
@@ -56,38 +66,55 @@ typedef struct ftw_input_t {
 } ftw_input;
 
 typedef struct ftw_output_t {
-    char  *status;
-    char  *response_contains;
-    char  *log_contains;
-    char  *no_log_contains;
-    char  *expect_error;
-    char  *response;
-    size_t response_len;
-    int    response_code;
-    char  *response_date;
+    unsigned int  status;
+    char         *response_contains;
+    char         *log_contains;
+    char         *no_log_contains;
+    ftw_log      *log;
+    ybool         expect_error;
+    ybool         retry_once;
+    ybool         isolated;
 } ftw_output;
 
+typedef struct ftw_stage_response_t {
+    char              *response_date;
+    unsigned int       response_code;
+    unsigned char     *response_body;
+    unsigned long int  response_len;
+    unsigned char     *response_content_type;
+} ftw_stage_response;
+
 typedef struct ftw_stage_item_t {
-    ftw_input  *input;
-    ftw_output *output;
+    ftw_input          *input;
+    ftw_output         *output;
+    ftw_stage_response *response;
 } ftw_stage;
 
 typedef struct {
     char          *test_title;
-    char          *rule_id;
-    char          *test_id;
-    char          *desc;
+    unsigned int   test_id;
     ftw_stage    **stages;
     unsigned int   stages_count;
 } ftwtest;
 
 typedef struct {
+    //char       * author;
     ybool        enabled;
+    //char       * name;
+    //char       * description;
+    //char       * version;
+    //char      ** tags;
+    //unsigned int tagcnt;
+} ftwmeta;
+
+typedef struct {
+    unsigned int rule_id;
+    ftwmeta      meta;
     ftwtest    **tests;
     unsigned int test_count;
 } ftwtestcollection;
 
-ftwtestcollection *ftwtestcollection_new(yaml_item * yroot, char * rule_id, char * test_id);
+ftwtestcollection *ftwtestcollection_new(yaml_item * yroot, unsigned int rule_id, unsigned int test_id);
 void               ftwtestcollection_free(ftwtestcollection * collection);
 
 #endif

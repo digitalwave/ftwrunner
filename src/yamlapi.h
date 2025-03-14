@@ -86,9 +86,9 @@ void       yaml_item_list_free (yaml_item_list * ylist);
 yaml_item *parse_yaml (const char *file_name);
 void       yaml_item_print (yaml_item * yval);
 void       yaml_item_list_print (yaml_item_list * ylist);
-int        yaml_item_has_key (yaml_item * yval, char *key);
+int        yaml_item_has_key (const yaml_item * yval, const char *key);
 int        yaml_item_get_value_by_key (yaml_item * yval, const char *key, yaml_item ** item);
-ybool      yaml_item_value_as_bool (yaml_item * yval);
+ybool      yaml_item_value_as_bool (const yaml_item * yval);
 
 extern char yaml_item_types[][50];
 extern char yaml_list_types[][50];

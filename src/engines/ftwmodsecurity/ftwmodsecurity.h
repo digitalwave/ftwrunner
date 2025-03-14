@@ -23,7 +23,7 @@
 
 void * ftw_engine_init_msc();
 void * ftw_engine_create_rules_set_msc(void * engine_instance, char * main_rule_uri, const char ** error);
-int    ftw_engine_runtest_msc(ftw_engine * engine, char * title, ftw_stage *stage, int debug);
+int    ftw_engine_runtest_msc(ftw_engine * engine, char * title, ftw_stage *stage, int debug, int verbose);
 
 void   ftw_engine_cleanup_msc(void * modsec);
 

@@ -94,16 +94,37 @@ void ftwinput_free(ftw_input *input) {
     free(input);
 }
 
+// free the ftwlof section of an output
+void ftwoutputlog_free(ftw_log **log) {
+    if (log != NULL && *log != NULL) {
+        FTW_FREE_STRING((*log)->match_regex);
+        FTW_FREE_STRING((*log)->no_match_regex);
+        if ((*log)->expect_ids_len > 0) {
+            free((*log)->expect_ids);
+        }
+        if ((*log)->no_expect_ids_len > 0) {
+            free((*log)->no_expect_ids);
+        }
+        free(*log);
+        *log = NULL;
+    }
+}
+
 // free the output section of a stage
 void ftwoutput_free(ftw_output *output) {
-    FTW_FREE_STRING(output->status);
     FTW_FREE_STRING(output->response_contains);
     FTW_FREE_STRING(output->log_contains);
     FTW_FREE_STRING(output->no_log_contains);
-    FTW_FREE_STRING(output->expect_error);
-    FTW_FREE_STRING(output->response);
-    FTW_FREE_STRING(output->response_date);
+    ftwoutputlog_free(&output->log);
     free(output);
+}
+
+// free the response structure
+void ftwresponse_free(ftw_stage_response *response) {
+    FTW_FREE_STRING(response->response_date);
+    FTW_FREE_STRING(response->response_body);
+    FTW_FREE_STRING(response->response_content_type);
+    free(response);
 }
 
 // free a stage, contains input and output sections
@@ -115,6 +136,9 @@ void ftwstage_free(ftw_stage * stage) {
         if (stage->output != NULL) {
             ftwoutput_free(stage->output);
         }
+        if (stage->response != NULL) {
+            ftwresponse_free(stage->response);
+        }
         free(stage);
     }
 }
@@ -123,9 +147,6 @@ void ftwstage_free(ftw_stage * stage) {
 void ftwtest_free(ftwtest *test) {
     if (test != NULL) {
         FTW_FREE_STRING(test->test_title);
-        FTW_FREE_STRING(test->desc);
-        FTW_FREE_STRING(test->rule_id);
-        FTW_FREE_STRING(test->test_id);
         // free stages
         for(int i=0; i<test->stages_count; i++) {
             ftwstage_free(test->stages[i]);
@@ -140,10 +161,12 @@ void ftwtest_free(ftwtest *test) {
 
 // free a collection of tests, contains tests
 void ftwtestcollection_free(ftwtestcollection * collection) {
-    for(int t = 0; t < collection->test_count; t++) {
-        ftwtest_free(collection->tests[t]);
+    if (collection != NULL) {
+        for(int t = 0; t < collection->test_count; t++) {
+            ftwtest_free(collection->tests[t]);
+        }
+        free(collection->tests);
     }
-    free(collection->tests);
     free(collection);
 }
 
@@ -154,27 +177,108 @@ void ftwtestcollection_free(ftwtestcollection * collection) {
     } \
     }
 
+// create a new output log section
+ftw_log * ftwoutputlog_new(yaml_item * ylog) {
+
+    yaml_item * ytitem;
+    ftw_log   * log = malloc(sizeof(ftw_log));
+
+    if (log == NULL) {
+        return NULL;
+    }
+
+    log->expect_ids        = NULL;
+    log->expect_ids_len    = 0;
+    log->no_expect_ids     = NULL;
+    log->no_expect_ids_len = 0;
+    log->match_regex       = NULL;
+    log->no_match_regex    = NULL;
+
+    if (yaml_item_get_value_by_key(ylog, (const char *)"expect_ids", &ytitem) == YAML_KEYSEARCH_FOUND) {
+        if (ytitem->type != YAML_VALTYPE_LIST) {
+            printf("expect_ids is not a list\n");
+            free(log);
+            return NULL;
+        }
+        else {
+            log->expect_ids = calloc(ytitem->value.list->length, sizeof(unsigned int));
+            for(int si = 0; si < ytitem->value.list->length; si++) {
+                log->expect_ids[si] = atoi(ytitem->value.list->list[si]->value.sval);
+                log->expect_ids_len++;
+            }
+        }
+    }
+    if (yaml_item_get_value_by_key(ylog, (const char *)"no_expect_ids", &ytitem) == YAML_KEYSEARCH_FOUND) {
+        if (ytitem->type != YAML_VALTYPE_LIST) {
+            printf("no_expect_ids is not a list\n");
+            free(log->expect_ids);
+            free(log);
+            return NULL;
+        }
+        else {
+            log->no_expect_ids = calloc(ytitem->value.list->length, sizeof(unsigned int));
+            for(int si = 0; si < ytitem->value.list->length; si++) {
+                log->no_expect_ids[si] = atoi(ytitem->value.list->list[si]->value.sval);
+                log->no_expect_ids_len++;
+            }
+        }
+    }
+    return log;
+}
+
 // create a new output section for a stage
 ftw_output * ftwoutput_new(yaml_item * youtput) {
 
     yaml_item * ytitem;
+    ftw_output *output        = malloc(sizeof(ftw_output));
 
-    ftw_output *output         = malloc(sizeof(ftw_output));
-    output->status            = NULL;
+    if (output == NULL) {
+        return NULL;
+    }
+
+    output->status            = 0;
+    if(yaml_item_get_value_by_key(youtput, (const char *)"status", &ytitem) == YAML_KEYSEARCH_FOUND) {
+        output->status        = atoi(ytitem->value.sval);
+        ytitem                = NULL;
+    }
     output->response_contains = NULL;
+    if(yaml_item_get_value_by_key(youtput, (const char *)"response_contains", &ytitem) == YAML_KEYSEARCH_FOUND) {
+        output->response_contains = strdup(ytitem->value.sval);
+        ytitem                    = NULL;
+    }
     output->log_contains      = NULL;
+    if(yaml_item_get_value_by_key(youtput, (const char *)"log_contains", &ytitem) == YAML_KEYSEARCH_FOUND) {
+        output->log_contains  = strdup(ytitem->value.sval);
+        ytitem                = NULL;
+    }
     output->no_log_contains   = NULL;
-    output->expect_error      = NULL;
-    output->response          = NULL;
-    output->response_len      = 0;
-    output->response_code     = 200;
-    output->response_date     = NULL;
+    if(yaml_item_get_value_by_key(youtput, (const char *)"no_log_contains", &ytitem) == YAML_KEYSEARCH_FOUND) {
+        output->no_log_contains  = strdup(ytitem->value.sval);
+        ytitem                   = NULL;
+    }
+    output->log               = NULL;
+    if(yaml_item_get_value_by_key(youtput, (const char *)"log", &ytitem) == YAML_KEYSEARCH_FOUND) {
+        output->log           = ftwoutputlog_new(ytitem);
+        if (output->log == NULL) {
+            free(output->response_contains);
+            free(output->log_contains);
+            free(output->no_log_contains);
+            free(output);
+            return NULL;
+        }
+        ytitem                = NULL;
+    }
+    output->expect_error      = FALSE;
+    if (yaml_item_get_value_by_key(youtput, (const char *)"expect_error", &ytitem) == YAML_KEYSEARCH_FOUND) {
+        output->expect_error  = yaml_item_value_as_bool(ytitem);
+        ytitem                = NULL;
+    }
+    output->retry_once        = 0;
+    output->isolated          = 0;
 
-    FTWOUTPUT_VAR(status);
     FTWOUTPUT_VAR(response_contains);
     FTWOUTPUT_VAR(log_contains);
     FTWOUTPUT_VAR(no_log_contains);
-    FTWOUTPUT_VAR(expect_error);
 
     return output;
 }
@@ -186,8 +290,12 @@ void ftwinput_headers_new(ftw_input * input, yaml_item * yheaders) {
     input->headers_len = 0;
     for(int i = 0; i < yheaders->value.list->length; i++) {
 
-        yaml_item * yheader = yheaders->value.list->list[i];
+        const yaml_item * yheader = yheaders->value.list->list[i];
         ftw_header *header = calloc(1, sizeof(ftw_header));
+
+        if (header == NULL) {
+            return;
+        }
 
         header->name = strdup(yheader->name);
         header->value = strdup(yheader->value.sval);
@@ -222,6 +330,9 @@ ftw_input * ftwinput_new(yaml_item * yinput) {
     yaml_item * ytitem;
 
     ftw_input *input       = malloc(sizeof(ftw_input));
+    if (input == NULL) {
+        return NULL;
+    }
     input->dest_addr       = NULL;
     input->port            = 0;
     input->method          = NULL;
@@ -233,6 +344,7 @@ ftw_input * ftwinput_new(yaml_item * yinput) {
     input->data            = NULL;
     input->save_cookie     = 0;
     input->stop_magic      = 0;
+    input->autocomplete_headers = 1;
     input->encoded_request = NULL;
     input->raw_request     = NULL;
 
@@ -259,11 +371,18 @@ ftw_input * ftwinput_new(yaml_item * yinput) {
         input->stop_magic = yaml_item_value_as_bool(ytitem);
         ytitem = NULL;
     }
+    if (yaml_item_get_value_by_key(yinput, (const char *)"autocomplete_headers", &ytitem) == YAML_KEYSEARCH_FOUND) {
+        input->autocomplete_headers = yaml_item_value_as_bool(ytitem);
+        ytitem = NULL;
+    }
     FTWINPUT_VAR(encoded_request);
     FTWINPUT_VAR(raw_request);
 
     if (yaml_item_get_value_by_key(yinput, (const char *)"headers", &ytitem) == YAML_KEYSEARCH_FOUND) {
         ftwinput_headers_new(input, ytitem);
+        if (input->headers == NULL) {
+            return NULL;
+        }
         ytitem = NULL;
     }
 
@@ -282,16 +401,28 @@ ftw_input * ftwinput_new(yaml_item * yinput) {
             data_len = strlen(input->data);
         }
 
-        if (data_len > 0 && input->is_sent_header_content_type == 0) {
+        if (input->autocomplete_headers == 1) {
+            if (data_len > 0 && input->is_sent_header_content_type == 0) {
 
-            ftw_header *header = calloc(1, sizeof(ftw_header));
+                ftw_header *header = calloc(1, sizeof(ftw_header));
+                if (header == NULL) {
+                    return NULL;
+                }
+                header->name = strdup("Content-Type");
+                if (header->name == NULL) {
+                    free(header);
+                    return NULL;
+                }
+                header->value = strdup("application/x-www-form-urlencoded");
+                if (header->value == NULL) {
+                    free(header);
+                    return NULL;
+                }
+                input->content_type = header->value;
 
-            header->name = strdup("Content-Type");
-            header->value = strdup("application/x-www-form-urlencoded");
-            input->content_type = header->value;
-
-            input->headers = realloc(input->headers, (input->headers_len+1) * sizeof(ftw_header *));
-            input->headers[input->headers_len++] = header;
+                input->headers = realloc(input->headers, (input->headers_len+1) * sizeof(ftw_header *));
+                input->headers[input->headers_len++] = header;
+            }
         }
 
         // check whether the data is in encoded form or not
@@ -317,6 +448,9 @@ ftw_input * ftwinput_new(yaml_item * yinput) {
                 parse_qs(input->data, &parsed, &parsed_len);
                 if (parsed_len > 0) {
                     char * qs = calloc((data_len*4)+1, sizeof(char));
+                    if (qs == NULL) {
+                        return NULL;
+                    }
                     for(int i = 0; i < parsed_len; i++) {
                         char ** pair = parsed[i];
                         if (pair[0] != NULL && pair[1] != NULL) {
@@ -353,12 +487,44 @@ ftw_input * ftwinput_new(yaml_item * yinput) {
             free(unquoted_data);
         }
 
-        if (data_len > 0 && input->is_sent_header_content_length == 0) {
-            ftw_header *header = calloc(1, sizeof(ftw_header));
+        if (input->autocomplete_headers == 1) {
+            if (data_len > 0 && input->is_sent_header_content_length == 0) {
+                ftw_header *header = calloc(1, sizeof(ftw_header));
+                if (header == NULL) {
+                    return NULL;
+                }
+                header->name = strdup("Content-Length");
+                if (header->name == NULL) {
+                    free(header);
+                    return NULL;
+                }
+                header->value = calloc(data_len+1, sizeof(char));
+                if (header->value == NULL) {
+                    free(header->name);
+                    free(header);
+                    return NULL;
+                }
+                sprintf(header->value, "%zu", data_len);
 
-            header->name = strdup("Content-Length");
-            header->value = calloc(data_len+1, sizeof(char));
-            sprintf(header->value, "%ld", data_len);
+                input->headers = realloc(input->headers, (input->headers_len+1) * sizeof(ftw_header *));
+                input->headers[input->headers_len++] = header;
+            }
+            ftw_header *header = calloc(1, sizeof(ftw_header));
+            if (header == NULL) {
+                return NULL;
+            }
+            header->name = strdup("Connection");
+            if (header->name == NULL) {
+                free(header);
+                return NULL;
+            }
+            header->value = calloc(6, sizeof(char)); // 'close'
+            if (header->value == NULL) {
+                free(header->name);
+                free(header);
+                return NULL;
+            }
+            sprintf(header->value, "close");
 
             input->headers = realloc(input->headers, (input->headers_len+1) * sizeof(ftw_header *));
             input->headers[input->headers_len++] = header;
@@ -368,16 +534,34 @@ ftw_input * ftwinput_new(yaml_item * yinput) {
     return input;
 }
 
+// create a new response
+// this is not part of the yaml structure, but necessary for the test
+ftw_stage_response *ftw_stage_response_new(yaml_item * root) {
+    ftw_stage_response * response = malloc(sizeof(ftw_stage_response));
+    if (response == NULL) {
+        return NULL;
+    }
+    response->response_date = NULL;
+    response->response_code = 0;
+    response->response_len  = 0;
+    response->response_body = NULL;
+    response->response_content_type = NULL;
+    return response;
+}
+
 // create a new collection of tests
 // a collection contains the 'meta' and the 'test' sections
 // input arguments:
 // * yroot: the root ptr of a yaml tree
 // * rule_id: string of the rule id what we want to run only, eg "920100"
 // * test_id: string of the test id what we want to run only, eg "1"
-ftwtestcollection *ftwtestcollection_new(yaml_item * yroot, char * rule_id, char * test_id) {
+ftwtestcollection *ftwtestcollection_new(yaml_item * yroot, unsigned int rule_id, unsigned int test_id) {
 
     yaml_item * ytitem1 = NULL, * ytitem2 = NULL, * ytests = NULL;
     ftwtestcollection *collection = malloc(sizeof(ftwtestcollection));
+    if (collection == NULL) {
+        return NULL;
+    }
     collection->tests = calloc(1, sizeof(ftwtest *));
     collection->test_count = 0;
 
@@ -389,17 +573,27 @@ ftwtestcollection *ftwtestcollection_new(yaml_item * yroot, char * rule_id, char
     }
     else {
         if (yaml_item_get_value_by_key(ytitem1, (const char *)"enabled", &ytitem2) != YAML_KEYSEARCH_FOUND) {
-            printf("Key not exists: enabled\n");
+            // if there is no 'enabled' key we assume that's enabled by default
+            collection->meta.enabled = TRUE;
+        }
+        else {
+            collection->meta.enabled = yaml_item_value_as_bool(ytitem2);
+        }
+        // other fields are not used
+        // author, ...
+    }
+
+    // parse the list of tests only if the meta.enabled is true
+    if (collection->meta.enabled == TRUE) {
+        if (yaml_item_get_value_by_key(yroot, (const char *)"rule_id", &ytitem1) != YAML_KEYSEARCH_FOUND) {
+            printf("Key not exists: rule_id\n");
             ftwtestcollection_free(collection);
             return NULL;
         }
         else {
-            collection->enabled = yaml_item_value_as_bool(ytitem2);
+            collection->rule_id = atol(ytitem1->value.sval);
         }
-    }
 
-    // parse the list of tests only if the meta.enabled is true
-    if (collection->enabled == TRUE) {
         if (yaml_item_get_value_by_key(yroot, (const char *)"tests", &ytests) != YAML_KEYSEARCH_FOUND) {
             printf("Key not exists: tests\n");
             ftwtestcollection_free(collection);
@@ -417,38 +611,22 @@ ftwtestcollection *ftwtestcollection_new(yaml_item * yroot, char * rule_id, char
                 for(int t = 0; t < ytests->value.list->length; t++) {
                     yaml_item *ytest = ytests->value.list->list[t];
                     ftwtest *test = malloc(sizeof(ftwtest));
+                    if (test == NULL) {
+                        puts("Memory allocation error");
+                        ftwtestcollection_free(collection);
+                        return NULL;
+                    }
                     test->test_title = NULL;
-                    test->desc = NULL;
-                    test->rule_id = NULL;
-                    test->test_id = NULL;
+                    test->test_id = 0;
                     test->stages  = NULL;
                     test->stages_count = 0;
-                    int test_need = 0;
-                    if (yaml_item_get_value_by_key(ytest, (const char *)"test_title", &ytitem1) == YAML_KEYSEARCH_FOUND) {
-                        test->test_title = strdup(ytitem1->value.sval);
-                        char* token = strtok(ytitem1->value.sval, "-");
-                        if (token != NULL) {
-                            test->rule_id = strdup(token);
-                            token = strtok(NULL, "-");
-                            if (token != NULL) {
-                                test->test_id = strdup(token);
-                            }
-                            else {
-                                test->test_id = strdup("");
-                            }
-                        }
-                        else {
-                            test->rule_id = strdup(test->test_title);
-                            test->test_id = strdup("");
-                        }
+                    if (yaml_item_get_value_by_key(ytest, (const char *)"test_id", &ytitem1) == YAML_KEYSEARCH_FOUND) {
+                        test->test_id = atoi(ytitem1->value.sval);
                         ytitem1 = NULL;
-                        if (rule_id == NULL || strcmp(rule_id, test->rule_id) == 0) {
-                            if (test_id == NULL || strcmp(test_id, test->test_id) == 0) {
+                        int test_need = 0;
+                        if (rule_id == 0 || rule_id == collection->rule_id) {
+                            if (test_id == 0 || test_id == test->test_id) {
                                 test_need = 1;
-                                if (yaml_item_get_value_by_key(ytest, (const char *)"desc", &ytitem1) == YAML_KEYSEARCH_FOUND) {
-                                    test->desc = strdup(ytitem1->value.sval);
-                                    ytitem1 = NULL;
-                                }
                                 if (yaml_item_get_value_by_key(ytest, (const char *)"stages", &ytitem1) == YAML_KEYSEARCH_FOUND) {
                                     if (ytitem1->type != YAML_VALTYPE_LIST) {
                                         printf("Stages is not a list\n");
@@ -464,10 +642,18 @@ ftwtestcollection *ftwtestcollection_new(yaml_item * yroot, char * rule_id, char
                                                 ytitem2      = NULL;
                                             }
                                             ftw_stage *stage  = malloc(sizeof(ftw_stage));
+                                            if (stage == NULL) {
+                                                puts("Memory allocation error");
+                                                return NULL;
+                                            }
                                             stage->input      = NULL;
                                             stage->output     = NULL;
                                             if (yaml_item_get_value_by_key(ystage, (const char *)"input", &ytitem2) == YAML_KEYSEARCH_FOUND) {
                                                 stage->input = ftwinput_new(ytitem2);
+                                                if (stage->input == NULL) {
+                                                    puts("Memory allocation error");
+                                                    return NULL;
+                                                }
                                                 ytitem2      = NULL;
                                             }
                                             else {
@@ -475,6 +661,10 @@ ftwtestcollection *ftwtestcollection_new(yaml_item * yroot, char * rule_id, char
                                             }
                                             if (yaml_item_get_value_by_key(ystage, (const char *)"output", &ytitem2) == YAML_KEYSEARCH_FOUND) {
                                                 stage->output = ftwoutput_new(ytitem2);
+                                                if (stage->output == NULL) {
+                                                    puts("Memory allocation error");
+                                                    return NULL;
+                                                }
                                                 ytitem2       = NULL;
                                             }
                                             test->stages_count++;
@@ -482,7 +672,7 @@ ftwtestcollection *ftwtestcollection_new(yaml_item * yroot, char * rule_id, char
                                             test->stages[test->stages_count-1] = stage;
 
                                             // prepare the response based on the input
-                                            if (stage->input->uri != NULL) {
+                                            /*if (stage->input->uri != NULL) {
                                                 if (strlen(stage->input->uri) == 0) {
                                                     stage->output->response = calloc(strlen(response_ok)+1, sizeof(char));
                                                     stage->output->response_len = strlen(response_ok);
@@ -525,6 +715,25 @@ ftwtestcollection *ftwtestcollection_new(yaml_item * yroot, char * rule_id, char
                                                     stage->output->response_date = calloc(40, sizeof(char));
                                                     strftime(stage->output->response_date, 40, "%a, %d %b %Y %H:%M:%S GMT", timeinfo);
                                                 }
+                                            } */
+                                            if (stage->input->uri != NULL) {
+                                                stage->response = ftw_stage_response_new(NULL);
+                                                if (stage->response == NULL) {
+                                                    puts("Memory allocation error");
+                                                    return NULL;
+                                                }
+                                                stage->response->response_code = 200;
+                                                time_t timeraw;
+                                                const struct tm * timeinfo;
+                                                time(&timeraw);
+                                                timeinfo = gmtime(&timeraw);
+                                                stage->response->response_date = calloc(40, sizeof(char));
+                                                strftime(stage->response->response_date, 40, "%a, %d %b %Y %H:%M:%S GMT", timeinfo);
+                                                if (strcmp(stage->input->uri, "/reflect") == 0) {
+                                                    stage->response->response_body = (unsigned char*)strdup(stage->input->data);
+                                                    stage->response->response_len = strlen((char*)stage->response->response_body);
+                                                    stage->response->response_content_type = (unsigned char *)strdup(stage->input->content_type);
+                                                }
                                             }
                                         }
                                     }
@@ -536,7 +745,7 @@ ftwtestcollection *ftwtestcollection_new(yaml_item * yroot, char * rule_id, char
                                 }
                                 // FIXME: Add stages
                                 collection->tests = realloc(collection->tests, sizeof(ftwtest *) * (collection->test_count + 1));
-                                collection->tests[collection->test_count++] = test;                                                               
+                                collection->tests[collection->test_count++] = test;
                             }
                         }
                         if (test_need == 0) {

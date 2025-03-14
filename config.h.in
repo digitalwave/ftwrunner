@@ -9,7 +9,7 @@
 /* Define to 1 if you have the `libcorazacore' library (-lcorazacore). */
 #undef HAVE_LIBCORAZA
 
-/* Define to 1 if you have the `yaml' library (-lyaml). */
+/* Define to 1 if you have the 'yaml' library (-lyaml). */
 #undef HAVE_LIBYAML
 
 /* Define to 1 if you have the `modsecurity' library (-lmodsecurity). */
@@ -18,8 +18,8 @@
 /* Define to 1 if you have the <modsecurity/modsecurity.h> header file. */
 #undef HAVE_MODSECURITY_MODSECURITY_H
 
-/* Define to 1 if you have the <pcre.h> header file. */
-#undef HAVE_PCRE_H
+/* Define to 1 if you have the <pcre2.h> header file. */
+#undef HAVE_PCRE2_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -69,7 +69,10 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Define to 1 if all of the C90 standard headers exist (not just the ones
+/* Define the PCRE2 code unit width */
+#undef PCRE2_CODE_UNIT_WIDTH
+
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
@@ -77,8 +80,8 @@
 /* Version number of package */
 #undef VERSION
 
-/* Define to `unsigned int' if <sys/types.h> does not define. */
+/* Define as 'unsigned int' if <stddef.h> doesn't define. */
 #undef size_t
 
-/* Define to `int' if <sys/types.h> does not define. */
+/* Define as 'int' if <sys/types.h> doesn't define. */
 #undef ssize_t

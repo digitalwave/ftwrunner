@@ -45,28 +45,32 @@ void showhelp(void) {
     printf("\t-m\tUse alternative ModSecurity config instead of in default config\n");
     printf("\t-r\tUse only this rule test, eg. '-r 911100'\n");
     printf("\t-t\tUse only this test of all, eg. '-t 1'\n");
+    printf("\t-o\tUse overrides from file\n");
     printf("\t-e\tUse WAF engine\n");
     printf("\t  \tavailable engines:\n");
     for(int i = 0; i < engine_count; i++) {
         printf("\t  \t- %s\n", available_engines[i]);
     }
     printf("\t-d  \tShow detailed information.\n");
+    printf("\t-v  \tVerbose output.\n");
     printf("\n");
 }
 
 
 int main(int argc, char **argv) {
 
-    int  debug               = 0;
+    int  debug                = 0;
+    int  verbose              = 0;
     char c;
-    char *ftwconfig          = NULL;
-    char *modsecurity_config = NULL;
-    char *ftwtest_root       = NULL;
-    char *rule_test          = NULL;
-    char *rule_test_id       = NULL;
-    char **test_whitelist    = NULL;
-    int test_whitelist_count = 0;
-    char *ftwengine          = NULL;
+    char *ftwconfig           = NULL;
+    char *modsecurity_config  = NULL;
+    char *ftwtest_root        = NULL;
+    unsigned int rule_test    = 0;
+    unsigned int rule_test_id = 0;
+    char **test_whitelist     = NULL;
+    int test_whitelist_count  = 0;
+    char *ftwengine           = NULL;
+    char *overrides           = NULL;
 
     char **tests      = NULL;
     int    test_count = 0;
@@ -82,7 +86,7 @@ strcpy(available_engines[engine_count++], "coraza");
 #endif
 
     // parse arguments
-    while ((c = getopt (argc, argv, "hdc:m:r:t:f:e:")) != -1) {
+    while ((c = getopt (argc, argv, "hdvc:m:r:t:f:e:o:")) != -1) {
         switch (c) {
             case 'h':
                 showhelp();
@@ -94,10 +98,10 @@ strcpy(available_engines[engine_count++], "coraza");
                 modsecurity_config = strdup(optarg);
                 break;
             case 'r':
-                rule_test    = strdup(optarg);
+                rule_test    = atoi(optarg);
                 break;
             case 't':
-                rule_test_id = strdup(optarg);
+                rule_test_id = atoi(optarg);
                 break;
             case 'f':
                 ftwtest_root = strdup(optarg);
@@ -108,6 +112,11 @@ strcpy(available_engines[engine_count++], "coraza");
             case 'd':
                 debug = 1;
                 break;
+            case 'v':
+                verbose = 1;
+                break;
+            case 'o':
+                overrides    = strdup(optarg); // cppcheck-suppress unreadVariable
             case '?':
                 if (optopt == 'n' || optopt == 'm' || optopt == 'r' || optopt == 't' || optopt == 'f' || optopt == 'e') {
                     fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -135,6 +144,40 @@ strcpy(available_engines[engine_count++], "coraza");
         fprintf(stderr, "Error: config file %s not found!\n", ftwconfig);
         return EXIT_FAILURE;
     }
+    if (overrides != NULL) {
+        if(access(overrides, F_OK) != 0) {
+            fprintf(stderr, "Error: overriders file %s not found!\n", overrides);
+            return EXIT_FAILURE;
+        }
+        else {
+
+            yroot = parse_yaml(overrides);
+            if (yroot == NULL) {
+                fprintf(stderr, "Error parsing file %s!\n", overrides);
+                return EXIT_FAILURE;;
+            }
+            else {
+                yaml_item *titem;
+                if (yaml_item_get_value_by_key(yroot, (const char *)"test_whitelist", &titem) == YAML_KEYSEARCH_FOUND && titem->type == YAML_VALTYPE_LIST) {
+                    int i;
+                    test_whitelist = calloc(titem->value.list->length+1, sizeof(char *));
+                    if (test_whitelist == NULL) {
+                        fprintf(stderr, "Error: out of memory!\n");
+                        return EXIT_FAILURE;
+                    }
+                    for (i = 0; i < titem->value.list->length; i++) {
+                        test_whitelist[i] = strdup(titem->value.list->list[i]->value.sval);
+                    }
+                    qsort(test_whitelist, titem->value.list->length, sizeof(char *), walkcmp);
+                    test_whitelist_count = titem->value.list->length;
+                    test_whitelist[i] = NULL;
+                }
+                yaml_item_free(yroot);
+            }
+
+        }
+    }
+
     if (engine_count == 0) {
         fprintf(stderr, "Error: no engine available!\n");
         return EXIT_FAILURE;
@@ -171,6 +214,10 @@ strcpy(available_engines[engine_count++], "coraza");
         if (yaml_item_get_value_by_key(yroot, (const char *)"test_whitelist", &titem) == YAML_KEYSEARCH_FOUND && titem->type == YAML_VALTYPE_LIST) {
             int i;
             test_whitelist = calloc(titem->value.list->length+1, sizeof(char *));
+            if (test_whitelist == NULL) {
+                fprintf(stderr, "Error: out of memory!\n");
+                return EXIT_FAILURE;
+            }
             for (i = 0; i < titem->value.list->length; i++) {
                 test_whitelist[i] = strdup(titem->value.list->list[i]->value.sval);
             }
@@ -216,34 +263,35 @@ strcpy(available_engines[engine_count++], "coraza");
         else {
             qsort(tests, test_count, sizeof(char *), walkcmp);
             for(int i = 0; i < test_count; i++) {
-                yaml_item *yroot = parse_yaml(tests[i]);
-                ftwtestcollection * collection = ftwtestcollection_new(yroot, rule_test, rule_test_id);
-                //if (collection->enabled) {
+                yaml_item *yrootsub = parse_yaml(tests[i]);
+                ftwtestcollection * collection = ftwtestcollection_new(yrootsub, rule_test, rule_test_id);
+                if (collection == NULL) {
+                    fprintf(stderr, "Error parsing file %s! (Memory allocation error)\n", tests[i]);
+                    exit(EXIT_FAILURE);
+                }
+                if (collection->meta.enabled) {
                     for(int t = 0; t < collection->test_count; t++) {
                         ftwtest *test = collection->tests[t];
-                        if (rule_test == NULL || strcmp(rule_test, test->rule_id) == 0) {
-                            if (rule_test_id == NULL || strcmp(rule_test_id, test->test_id) == 0) {
+                        if (rule_test == 0 || rule_test == collection->rule_id) {
+                            if (rule_test_id == 0 || rule_test_id == test->test_id) {
                                 for(int si = 0; si < test->stages_count; si++) {
                                     ftw_stage *stage = test->stages[si];
-                                    char * test_full_id = calloc(strlen(test->rule_id) + strlen(test->test_id) + 2, sizeof(char));
-                                    strcat(test_full_id, test->rule_id);
-                                    strcat(test_full_id, "-");
-                                    strcat(test_full_id, test->test_id);
+                                    char test_full_id[50];
+                                    sprintf(test_full_id, "%u-%u", collection->rule_id, test->test_id);
                                     int wl = qsearch(test_whitelist, test_whitelist_count, test_full_id);
-                                    engine_runtest(engine, collection->enabled, ((wl >= 0) ? 1 : 0), test->test_title, stage, debug);
-                                    if (test_full_id != NULL) {
-                                        free(test_full_id);
-                                    }
+                                    //engine_runtest(engine, collection->meta.enabled, ((wl >= 0) ? 1 : 0), test->test_title, stage, debug);
+                                    engine_runtest(engine, collection->meta.enabled, ((wl >= 0) ? 1 : 0), test_full_id, stage, debug, verbose);
                                 }
                             }
                         }
                     }
-                //}
+                }
                 ftwtestcollection_free(collection);
-                yaml_item_free(yroot);
+                yaml_item_free(yrootsub);
                 free(tests[i]);
             }
             ftw_engine_show_result(engine);
+            logCbClearLog();
         }
         if (engine != NULL) {
             ftw_engine_free(engine);
@@ -258,7 +306,5 @@ strcpy(available_engines[engine_count++], "coraza");
     FTW_FREE_STRING(modsecurity_config);
     FTW_FREE_STRING(ftwtest_root);
     FTW_FREE_STRING(ftwengine);
-    FTW_FREE_STRING(rule_test);
-    FTW_FREE_STRING(rule_test_id);
     FTW_FREE_STRINGLIST(test_whitelist);
 }

@@ -72,18 +72,17 @@ char * urlencode(const char * s) {
 }
 
 // unquote the string
-char * unquote(char * src) {
+char * unquote(const char * src) {
     char * ret = calloc(sizeof(char), strlen(src) + 1);
     // assume there is no char to unquote in source
     char ch;
-    size_t i;
     unsigned int ii;
     int j = 0;
-    for (i=0; i< strlen(src); i++) {
+    for (size_t i=0; i< strlen(src); i++) {
         if (src[i] == '%') {
-            char substr[3];
             if (i < strlen(src) - 2) {
                 if (isxdigit(src[i+1]) && isxdigit(src[i+2])) {
+                    char substr[3];
                     substr[0] = src[i+1];
                     substr[1] = src[i+2];
                     substr[2] = '\0';
@@ -121,34 +120,33 @@ void parse_qs(char * q, char **** parsed, int * parsed_count) {
     char *token         = NULL;
 
     while ((token = strtok_r(q, "&", &q))) {
-        if (token != NULL) {
-            int c = 0;
-            size_t tlen = strlen(token);
-            // find the first '='
-            for (c = 0; c < tlen && token[c] != '='; c++);
+        int c = 0;
+        size_t tlen = strlen(token);
+        // find the first '='
+        for (c = 0; c < tlen && token[c] != '='; c++);
 
-            (*parsed) = realloc((*parsed), sizeof(char**) * ((*parsed_count) + 1));
-            (*parsed)[*parsed_count] = malloc(sizeof(char*) * 2);
-            // set key and val if there is a '=' in the middle of the token
-            if (c > 0 && c < tlen) {
-                (*parsed)[*parsed_count][0] = calloc(c+1, sizeof(char));
-                strncpy((*parsed)[*parsed_count][0], token, c);
-                (*parsed)[*parsed_count][1] = strdup(token + c + 1);
-            } else {
-                // otherwise handle the spec cases
-                if (c == 0) {
-                    // eg. query string part is '=foo'
-                    (*parsed)[*parsed_count][0] = NULL;
-                    (*parsed)[*parsed_count][1] = strdup(token);
-                }
-                else {
-                    // or query string part is 'foo=' or '===='
-                    (*parsed)[*parsed_count][0] = strdup(token);
-                    (*parsed)[*parsed_count][1] = NULL;
-                }
+        (*parsed) = realloc((*parsed), sizeof(char**) * ((*parsed_count) + 1));
+        (*parsed)[*parsed_count] = malloc(sizeof(char*) * 2);
+        // set key and val if there is a '=' in the middle of the token
+        if (c > 0 && c < tlen) {
+            (*parsed)[*parsed_count][0] = calloc(c+1, sizeof(char));
+            strncpy((*parsed)[*parsed_count][0], token, c);
+            (*parsed)[*parsed_count][1] = strdup(token + c + 1);
+        } else {
+            // otherwise handle the spec cases
+            if (c == 0) {
+                // eg. query string part is '=foo'
+                (*parsed)[*parsed_count][0] = NULL;
+                (*parsed)[*parsed_count][1] = strdup(token);
             }
-            (*parsed_count)++;
+            else {
+                // or query string part is 'foo=' or '===='
+                (*parsed)[*parsed_count][0] = strdup(token);
+                (*parsed)[*parsed_count][1] = NULL;
+            }
         }
+        (*parsed_count)++;
+
     }
 
     return;
@@ -181,17 +179,17 @@ static const unsigned char base64_table[65] =
 unsigned char * base64_decode(const unsigned char *src, size_t len,
 			      size_t *out_len)
 {
-	unsigned char dtable[256], *out, *pos, block[4], tmp;
-	size_t i, count, olen;
+	unsigned char dtable[256], *out, *pos, block[4];
+	size_t count, olen;
 	int pad = 0;
 
 	memset(dtable, 0x80, 256);
-	for (i = 0; i < sizeof(base64_table) - 1; i++)
+	for (size_t i = 0; i < sizeof(base64_table) - 1; i++)
 		dtable[base64_table[i]] = (unsigned char) i;
 	dtable['='] = 0;
 
 	count = 0;
-	for (i = 0; i < len; i++) {
+	for (size_t i = 0; i < len; i++) {
 		if (dtable[src[i]] != 0x80)
 			count++;
 	}
@@ -205,8 +203,8 @@ unsigned char * base64_decode(const unsigned char *src, size_t len,
 		return NULL;
 
 	count = 0;
-	for (i = 0; i < len; i++) {
-		tmp = dtable[src[i]];
+	for (size_t i = 0; i < len; i++) {
+		unsigned char tmp = dtable[src[i]];
 		if (tmp == 0x80)
 			continue;
 

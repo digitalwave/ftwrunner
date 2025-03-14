@@ -9,7 +9,7 @@ int walkcmp(const void *p1, const void *p2) {
 
 void walkdir(char *rootdir, char ***files, int *files_count) {
     DIR *dir;
-    struct dirent *entry;
+    const struct dirent *entry;
     size_t rootlen = strlen(rootdir);
 
     if (!(dir = opendir(rootdir))) {
@@ -40,11 +40,13 @@ void walkdir(char *rootdir, char ***files, int *files_count) {
                 }
                 else {
                     char * tname = malloc(strlen(name) + rootlen + 2);
+                    if (tname == NULL) {
+                        fprintf(stderr, "Out of memory\n");
+                        exit(EXIT_FAILURE);
+                    }
                     sprintf(tname, "%s/%s", rootdir, name);
                     (*files)[(*files_count)] = strdup(tname);
-                    if (tname != NULL) {
-                        free(tname);
-                    }
+                    free(tname);
                     (*files_count)++;
                 }
             }

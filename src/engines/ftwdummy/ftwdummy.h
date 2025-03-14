@@ -24,6 +24,6 @@
 #ifndef FTW_ENGINE_DUMMY
 #define FTW_ENGINE_DUMMY
 
-int ftw_engine_runtest_dummy(ftw_engine * engine, char * title, ftw_stage *stage, int debug);
+int ftw_engine_runtest_dummy(ftw_engine * engine, char * title, ftw_stage *stage, int debug, int verbose);
 
 #endif

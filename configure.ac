@@ -14,14 +14,19 @@ AC_PROG_CC
 
 AC_CHECK_HEADERS([modsecurity/modsecurity.h], [], [AC_MSG_NOTICE([unable to find header modsecurity/modsecurity.h])])
 AC_CHECK_HEADERS([coraza/core.h], [], [AC_MSG_NOTICE([unable to find header coraza/core.h])])
-AC_CHECK_HEADERS([pcre.h], [], [AC_MSG_ERROR([unable to find header pcre.h], 1)])
+AC_DEFINE([PCRE2_CODE_UNIT_WIDTH], [8], [Define the PCRE2 code unit width])
+AC_CHECK_HEADERS([pcre2.h], [], [AC_MSG_ERROR([unable to find header pcre2.h], 1)])
 AC_CHECK_HEADERS([yaml.h], [], [AC_MSG_ERROR([unable to find header yaml.h], 1)])
+
+#AX_CHECK_PCRE2([8])
 
 has_modsecurity=no
 has_coraza=no
 
 # Checks for libraries.
-AC_CHECK_LIB([pcre], [pcre_compile], [AC_SUBST([LIBPCRE_LIB], [-lpcre])], AC_MSG_ERROR([libpcre is not installed.], 1))
+#AC_CHECK_LIB([pcre2-8], [pcre2_compile], [AC_SUBST([LIBPCRE2_LIB], [-lpcre2-8])], AC_MSG_ERROR([libpcre2 is not installed.], 1))
+PKG_CHECK_MODULES([PCRE2], [libpcre2-8], [AC_SUBST([LIBPCRE2_LIB], [-lpcre2-8])],
+    [AC_MSG_ERROR([PCRE2 library is missing])])
 AC_CHECK_LIB([modsecurity],
              [msc_init],
              [
@@ -85,6 +90,11 @@ AC_CONFIG_FILES([Makefile src/Makefile])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 AC_OUTPUT
 
+AC_CHECK_PROG([CPPCHECK], [cppcheck], [cppcheck], [no])
+if test "x$CPPCHECK" = "xno"; then
+   AC_MSG_WARN([Cppcheck is not available, skipping static analysis.])
+fi
+
 echo \
 "----------------------------------------------------------------------
 
@@ -94,6 +104,7 @@ echo \
  Prefix         ${prefix}
  Preprocessor   ${CPP} ${CPPFLAGS}
  C Compiler     ${CC} ${CFLAGS}
+ CPPCHECK       ${CPPCHECK}
  Engines:
     modsecurity  ${has_modsecurity}
     coraza       ${has_coraza}

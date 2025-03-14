@@ -65,6 +65,9 @@ yaml_item * yaml_item_create (yaml_valtype_t type) {
         return NULL;
     }
     yaml_item *item = calloc (sizeof (yaml_item), 1);
+    if (item == NULL) {
+        return NULL;
+    }
     item->type = type;
     item->style = -1;
     itemstack[itemstackptr++] = item;
@@ -74,6 +77,9 @@ yaml_item * yaml_item_create (yaml_valtype_t type) {
 // Create list
 yaml_item_list * yaml_item_list_init (yaml_listtype_t type) {
     yaml_item_list *ylist = calloc (sizeof (yaml_item_list), 1);
+    if (ylist == NULL) {
+        return NULL;
+    }
     ylist->list = calloc (sizeof (yaml_item *), 1);
     ylist->type = type;
     ylist->length = 0;
@@ -150,7 +156,7 @@ void yaml_item_print (yaml_item * yval) {
             break;
         default:
             INDENT (print_level);
-            printf ("type: %d\n", yval->type);
+            printf ("type: %u\n", yval->type);
             printf ("value: EMPTY\n");
     }
 }
@@ -186,7 +192,7 @@ void yaml_item_list_print (yaml_item_list * ylist) {
 // KEY FUNCTIONS
 //
 // Check key exists
-int yaml_item_has_key (yaml_item * yval, char *key) {
+int yaml_item_has_key (const yaml_item * yval, const char *key) {
     if (yval->type != YAML_VALTYPE_DICT) {
         return YAML_KEYSEARCH_NOT_DICT;
     }
@@ -215,16 +221,16 @@ int yaml_item_get_value_by_key (yaml_item * yval, const char *key, yaml_item ** 
 // OTHER FUNCTIONS
 //
 // Cast value as bool if possible
-ybool yaml_item_value_as_bool (yaml_item * yval) {
+ybool yaml_item_value_as_bool (const yaml_item * yval) {
 
     char *t[] = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON", NULL};
     char *f[] = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF", NULL};
-    char **ptr;
 
     if (yval->type != YAML_VALTYPE_STRING) {
         return -1;
     }
     if (yval->style == YAML_PLAIN_SCALAR_STYLE) {
+        char **ptr;
         for (ptr = t; *ptr; ptr++) {
             if (strcmp(yval->value.sval, *ptr) == 0) {
                 return TRUE;
@@ -248,6 +254,10 @@ void parse_yaml_node (yaml_document_t * document, yaml_node_t * node) {
             break;
         case YAML_SCALAR_NODE:
             curritem = yaml_item_create (YAML_VALTYPE_STRING);
+            if (curritem == NULL) {
+                fputs ("Couldn't create item\n", stderr);
+                exit (1);
+            }
             curritem->value.sval = strdup ((const char *) node->data.scalar.value);
             curritem->style = node->data.scalar.style;
             break;
@@ -258,8 +268,16 @@ void parse_yaml_node (yaml_document_t * document, yaml_node_t * node) {
             }
             else {
                 curritem = yaml_item_create (YAML_VALTYPE_LIST);
+                if (curritem == NULL) {
+                    fputs ("Couldn't create item\n", stderr);
+                    exit (1);
+                }
             }
             curritem->value.list = yaml_item_list_init (YAML_LISTTYPE_LIST);
+            if (curritem->value.list == NULL) {
+                fputs ("Couldn't create list\n", stderr);
+                exit (1);
+            }
             {
                 yaml_node_item_t *i_node;
                 for (i_node = node->data.sequence.items.start;
@@ -278,14 +296,26 @@ void parse_yaml_node (yaml_document_t * document, yaml_node_t * node) {
             }
             else {
                 curritem = yaml_item_create (YAML_VALTYPE_DICT);
+                if (curritem == NULL) {
+                    fputs ("Couldn't create item\n", stderr);
+                    exit (1);
+                }
             }
             curritem->value.list = yaml_item_list_init (YAML_LISTTYPE_DICT);
+            if (curritem->value.list == NULL) {
+                fputs ("Couldn't create list\n", stderr);
+                exit (1);
+            }
             {
                 yaml_node_pair_t *i_node_p;
                 for (i_node_p = node->data.mapping.pairs.start;
                     i_node_p < node->data.mapping.pairs.top; i_node_p++) {
                     next_node = yaml_document_get_node (document, i_node_p->key);
                     curritem = yaml_item_create (YAML_VALTYPE_NOT_SET);
+                    if (curritem == NULL) {
+                        fputs ("Couldn't create item\n", stderr);
+                        exit (1);
+                    }
                     if (next_node) {
                         // set the key here
                         switch (next_node->type) {

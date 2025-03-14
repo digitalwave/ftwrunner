@@ -6,14 +6,14 @@ Welcome to the `ftwrunner` documentation. I'ld try to show this tool to every Mo
 Motivation
 ==========
 
-I help to maintain the code of [ModSecurity](https://www.modsecurity.org) (especially the [libmodsecurity3](https://github.com/SpiderLabs/ModSecurity)). A most important goal that get the state that the [CRS](https://coreruleset.org) can work together with libmodsecurity3, without errors: false positives and not working rules.
+I help to maintain the code of [ModSecurity](https://modsecurity.org) (especially the [libmodsecurity3](https://github.com/owasp-modsecurity/ModSecurity)). A most important goal that get the state that the [CRS](https://coreruleset.org) can work together with libmodsecurity3, without errors: false positives and not working rules.
 
-[CRS](https://github.com/SpiderLabs/owasp-modsecurity-crs) has a very good tool to test all of the rules, it's called [ftw](https://github.com/CRS-support/ftw), but it works only with the Apache webserver - consequently a HTTP server is required. Ftw uses [sets of tests](https://github.com/SpiderLabs/owasp-modsecurity-crs/tree/v3.2/dev/util/regression-tests/tests), which are divided to different sections, represented the attack type. Each section has a multiple test files, which represented the rules: every file named by the rule id. And finally, all ruleset has one or more test.
+[CRS](https://github.com/coreruleset/coreruleset) has a very good tool to test all of the rules, it's called [go-ftw](https://github.com/coreruleset/go-ftw), but it works only with a supported webserver - consequently a HTTP server is required. Go-ftw uses [sets of tests](https://github.com/coreruleset/coreruleset/tree/main/tests/regression/tests), which are divided to different sections, represented the attack type. Each section has a multiple test files, which represented the rules: every file named by the rule id. And finally, all ruleset has one or more test.
 
-These tests had written in [YAML](https://yaml.org/) format.
+These tests were written in [YAML](https://yaml.org/) format. The used schema is well documented on [ftw-tests-schema](https://github.com/coreruleset/ftw-tests-schema)
 
 
-Libmodsecurity3 has written in C++, and - therefore as a library - has an [API](https://github.com/SpiderLabs/ModSecurity#simple-example-using-c). The library has an own regression test framework, but mostly it's useful to tests the different functions one by one.
+Libmodsecurity3 has written in C++, and - therefore as a library - has an [API](https://github.com/owasp-modsecurity/ModSecurity#simple-example-using-c). The library has an own regression test framework, but mostly it's useful to tests the different functions one by one.
 
 As I wrote, my main goal is to adjusting the libmodsecurity3 code to use those rules, so I needed a tool, which I can test with the whole ruleset without any other external distractions, eg. webserver responses, other behaviors, etc...
 
@@ -36,15 +36,17 @@ To build the `ftwrunner`, you need:
 + **autotools**, **make**
 + of course, need the compiled and installed **libmodsecurity3**
 + and/or **coraza** and **librcoraza**
-+ **pcre** - the old version
++ **pcre2** - the **new** version
 + **libyaml**
 
 You have to install them on Debian with this command:
 
 ```
-sudo apt install gcc make autotools libpcre3-dev libyaml-dev
+sudo apt install gcc make autotools libpcre2-dev libpcre2-8-0 libyaml-dev
 ```
 and - as I wrote above - an installed libmodsecurity3 and/or libcoraza.
+
+(Note: unfortunately libcoraza is a very beta state at the moment, and it does not work.)
 
 *Note: Debian 10 and Debian 11 contains the libmodsecurity3 package, but since it released, there are so much modification in the code, so I **strongly suggest** that you get a clone with git, and compile it for yourself. Optionally, you can use our Debian repository: [https://modsecurity.digitalwave.hu](https://modsecurity.digitalwave.hu)*
 
@@ -69,6 +71,7 @@ At the and of `./configure`, you will get a report:
  Prefix         /usr/local
  Preprocessor   gcc -E 
  C Compiler     gcc -g -O2
+ CPPCHECK       cppcheck
  Engines:
     modsecurity  yes
     coraza       yes
@@ -107,7 +110,7 @@ $ cp ftwrunner.yaml.example ftwrunner.yaml
 ```
 and edit the options what you found there. Here is the content:
 ```
-modsecurity_config: /etc/apache2/modsecurity_includes.conf
+modsecurity_config: /etc/nginx/modsecurity_includes.conf
 ftwtest_root: /path/to/owasp-modsecurity-crs/util/regression-tests/tests
 test_whitelist:
 - 941190-3 # known MSC bug - PR #2023 (Cookie without value)
@@ -160,7 +163,7 @@ You can overwrite the `modsecurity_config: modsecurity_include.conf` variable wi
 
 Note, that it's generally useful if you don't want to run all tests in that directory, just a subset. Here is an example:
 ```
-$ ./ftwrunner -f //path/to/coreruleset/tests/regression/tests/REQUEST-920-PROTOCOL-ENFORCEMENT/
+$ ./ftwrunner -f /path/to/coreruleset/tests/regression/tests/REQUEST-920-PROTOCOL-ENFORCEMENT/
 ```
 
 `test_whitelist` - this is **not** a mandatory option, but can be useful to lists the tests titles, what you know that will FAILED. You can place a comment after the test title with a `#`, see example:
