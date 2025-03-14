@@ -42,7 +42,7 @@ void ftw_engine_cleanup_coraza(void * waf) {
 
 // run a transaction
 // a stage contains a transaction
-int ftw_engine_runtest_coraza(ftw_engine * engine, char * title, ftw_stage *stage, int debug) {
+int ftw_engine_runtest_coraza(ftw_engine * engine, char * title, ftw_stage *stage, int debug, int verbose) {
 
     int ret = FTW_TEST_FAIL;
 
@@ -76,14 +76,14 @@ int ftw_engine_runtest_coraza(ftw_engine * engine, char * title, ftw_stage *stag
     }
     coraza_add_request_header(transaction, "X-CRS-Test", 10, title, (int)strlen(title));
     coraza_process_request_headers(transaction);
-    it = coraza_intervention(transaction);
+    it = coraza_intervention(transaction); // cppcheck-suppress redundantAssignment
 
     // phase 2
     if (stage->input->data != NULL) {
         coraza_append_request_body(transaction, (unsigned char *)stage->input->data, strlen(stage->input->data));
     }
     coraza_process_request_body(transaction);
-    it = coraza_intervention(transaction);
+    it = coraza_intervention(transaction); // cppcheck-suppress redundantAssignment
 
     // phase 3
     char response_len[10];
@@ -93,18 +93,18 @@ int ftw_engine_runtest_coraza(ftw_engine * engine, char * title, ftw_stage *stag
     coraza_add_response_header(transaction, "Content-Type",   12, "text/html; charset=UTF-8", 24);
     coraza_add_response_header(transaction, "Content-Length", 14, response_len, (int)strlen(response_len));
     coraza_process_response_headers(transaction, stage->output->response_code, (char *)"HTTP/1.1");
-    it = coraza_intervention(transaction);
+    it = coraza_intervention(transaction); // cppcheck-suppress redundantAssignment
 
     // phase 4
     if (stage->output->response != NULL) {
         coraza_append_response_body(transaction, (unsigned char *)stage->output->response, stage->output->response_len);
     }
     coraza_process_response_body(transaction);
-    it = coraza_intervention(transaction);
+    it = coraza_intervention(transaction); // cppcheck-suppress redundantAssignment
 
     // phase 5
     coraza_process_logging(transaction);
-    it = coraza_intervention(transaction);
+    it = coraza_intervention(transaction); // cppcheck-suppress redundantAssignment
     if (it != NULL) {
         if (it->log != NULL) {
             free(it->log);

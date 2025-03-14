@@ -49,7 +49,7 @@ typedef struct ftw_runtest_t {
 typedef void * (*ftw_engine_init_fn)();
 typedef void * (*ftw_engine_create_rules_set_fn)(void * engine_instance, char * main_rule_uri, const char ** error);
 typedef void * (*ftw_engine_cleanup_fn)(void * engine_instance);
-typedef int    (*ftw_engine_runtest_fn)(ftw_engine * engine, char * title, ftw_stage *stage, int debug);
+typedef int    (*ftw_engine_runtest_fn)(ftw_engine * engine, char * title, ftw_stage *stage, int debug, int verbose);
 
 typedef struct ftw_engine_t {
     int                            engine_type;
@@ -73,16 +73,16 @@ typedef struct ftw_engine_t {
 
 ftw_engine * ftw_engine_init(int enginetype, char * main_rule_uri, const char ** error);
 void         ftw_engine_free(ftw_engine * engine);
-void         ftw_engine_show_result(ftw_engine * engine);
+void         ftw_engine_show_result(const ftw_engine * engine);
 
-void         fancy_print(char * test_title, int code, const char * msg, int modifier);
+static void  fancy_print(const char * test_title, int code, const char * msg, int modifier);
 
-int          qsearch(char **array, int size, char *key);
-int          engine_runtest(ftw_engine * engine, int enabled, int listed, char * title, ftw_stage *stage, int debug);
+int          qsearch(char **array, int size, const char *key);
+int          engine_runtest(ftw_engine * engine, int enabled, int listed, char * title, ftw_stage *stage, int debug, int verbose);
 
 void         logCbInit();
 void         logCbCleanup();
-void         logCbText(void *data, const void *msg);
+void         logCbText(void *data, const void *msgorig);
 void         logCbDump();
 void         logCbClearLog();
 char       * logContains(char * pattern, int negate);

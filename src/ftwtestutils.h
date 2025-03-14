@@ -28,7 +28,7 @@
 
 void            hexchar(unsigned char c, unsigned char *hex1, unsigned char *hex2);
 char          * urlencode(const char * s);
-char          * unquote(char * src);
+char          * unquote(const char * src);
 void            parse_qs(char * q, char **** parsed, int * parsed_count);
 unsigned char * base64_decode(const unsigned char *src, size_t len, size_t *out_len);
 

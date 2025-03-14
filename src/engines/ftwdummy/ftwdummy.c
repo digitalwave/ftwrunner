@@ -24,7 +24,7 @@
 
 // run a transaction
 // a stage contains a transaction
-int ftw_engine_runtest_dummy(ftw_engine * engine, char * title, ftw_stage *stage, int debug) {
+int ftw_engine_runtest_dummy(ftw_engine * engine, char * title, ftw_stage *stage, int debug, int verbose) {
 
     logCbText(NULL, "This is just a test log entry from dummy engine.");
     return FTW_TEST_PASS;
