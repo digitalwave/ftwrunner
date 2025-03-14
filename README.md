@@ -296,6 +296,117 @@ $ echo $?
 2
 ```
 
+Use `ftwrunner` with Valgrind
+=============================
+
+`ftwunner` can help to discover memory leaks in the library. It's highly recommended to make a minimal configuration (eg. only 1 rule) and make a test for that rule. Then you will see only the specific place where the memleak occurrs.
+
+Here is how do I do that.
+
+Create a new `ftwrunner` config:
+```
+$ cat ftwrunner-valgrind.yaml
+modsecurity_config: modsecurity_valgrind.conf
+#modsecurity_config: modsecurity_temp.conf
+ftwtest_root: /home/airween/src/coreruleset/tests/regression/tests/
+```
+Create a `new modsecurity_valgrind.conf` file in same directory:
+```
+include modsecurity.conf
+
+SecRule REQUEST_METHOD "!strEq GET" \
+    "id:911100,\
+    phase:1,\
+    block,\
+    msg:'Method is not allowed by policy',\
+    logdata:'%{MATCHED_VAR}',\
+    severity:'CRITICAL'"
+```
+Copy your original `modsecurity.conf` and `unicode.mapping` files into the same directory:
+```
+$ cp /path/to/your/modsecurity.conf .
+$ cp /path/to/your/unicode.mapping .
+```
+Try your setup first:
+```
+$ src/ftwrunner -e modsecurity -c ftwrunner-valgrind.yaml -r 911100 -t 6
+911100-6: PASSED
+
+SUMMARY
+===============================
+ENGINE:                 ModSecurity
+PASSED:                 1
+FAILED:                 0
+FAILED (whitelisted):   0
+SKIPPED:                0
+DISABLED:               0
+===============================
+TOTAL:                  1
+===============================
+```
+Note, that you only run test case 911100-6 with command arguments `-r 911100 -t 6`.
+
+Now you can check this again with **DUMMY** engine:
+```
+$ src/ftwrunner -e dummy -c ftwrunner-valgrind.yaml -r 911100 -t 6
+911100-6: PASSED
+
+SUMMARY
+===============================
+ENGINE:                 Dummy
+PASSED:                 1
+FAILED:                 0
+FAILED (whitelisted):   0
+SKIPPED:                0
+DISABLED:               0
+===============================
+TOTAL:                  1
+===============================
+```
+Note, that with **DUMMY** engine all tests will be passed.
+
+If your test is passed, then you can run the same command with valgrind:
+```
+$ valgrind -s --track-origins=yes src/ftwrunner -e modsecurity -c ftwrunner-valgrind.yaml -r 911100 -t 6 
+==359703== Memcheck, a memory error detector
+==359703== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
+==359703== Using Valgrind-3.24.0 and LibVEX; rerun with -h for copyright info
+==359703== Command: src/ftwrunner -e modsecurity -c ftwrunner-valgrind.yaml -r 911100 -t 6
+==359703== 
+==359703== Conditional jump or move depends on uninitialised value(s)
+==359703==    at 0x8C2831E: ???
+==359703==    by 0x8A9CE2F: ???
+==359703==  Uninitialised value was created by a heap allocation
+...
+```
+
+Now you can try the same command except the engine: use **DUMMY** again:
+```
+$ valgrind -s --track-origins=yes src/ftwrunner -e dummy -c ftwrunner-valgrind.yaml -r 911100 -t 6
+==359704== Memcheck, a memory error detector
+==359704== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
+==359704== Using Valgrind-3.24.0 and LibVEX; rerun with -h for copyright info
+==359704== Command: src/ftwrunner -e dummy -c ftwrunner-valgrind.yaml -r 911100 -t 6
+==359704== 
+...
+```
+
+Theoretically you must get a `no leaks are possible` answer from Valgrind:
+```
+...
+==359704== 
+==359704== HEAP SUMMARY:
+==359704==     in use at exit: 0 bytes in 0 blocks
+==359704==   total heap usage: 1,079,372 allocs, 1,079,372 frees, 92,166,262 bytes allocated
+==359704== 
+==359704== All heap blocks were freed -- no leaks are possible
+==359704== 
+==359704== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+```
+
+
+
+
 Reporting issues
 ================
 
