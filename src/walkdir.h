@@ -3,6 +3,6 @@
 #define _WALKTREE_H
 
 int walkcmp(const void *p1, const void *p2);
-void walkdir(char *rootdir, char ***files, int *files_count);
+void walkdir(char *rootdir, char ***files, unsigned *files_count);
 
 #endif
