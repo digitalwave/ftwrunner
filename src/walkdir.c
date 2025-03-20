@@ -7,7 +7,7 @@ int walkcmp(const void *p1, const void *p2) {
     return strcmp(*(const char **) p1, *(const char **) p2);
 }
 
-void walkdir(char *rootdir, char ***files, int *files_count) {
+void walkdir(char *rootdir, char ***files, unsigned *files_count) {
     DIR *dir;
     const struct dirent *entry;
     size_t rootlen = strlen(rootdir);

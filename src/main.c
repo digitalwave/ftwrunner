@@ -72,8 +72,9 @@ int main(int argc, char **argv) {
     char *ftwengine           = NULL;
     char *overrides           = NULL;
 
-    char **tests      = NULL;
-    int    test_count = 0;
+    char     **tests          = NULL;
+    unsigned   test_count     = 0;
+    unsigned   failed_count   = 0;
 
     yaml_item *yroot = NULL;
     const char * errormsg = NULL;
@@ -154,7 +155,7 @@ strcpy(available_engines[engine_count++], "coraza");
             yroot = parse_yaml(overrides);
             if (yroot == NULL) {
                 fprintf(stderr, "Error parsing file %s!\n", overrides);
-                return EXIT_FAILURE;;
+                return EXIT_FAILURE;
             }
             else {
                 yaml_item *titem;
@@ -197,7 +198,7 @@ strcpy(available_engines[engine_count++], "coraza");
     yroot = parse_yaml(ftwconfig);
     if (yroot == NULL) {
         fprintf(stderr, "Error parsing file %s!\n", ftwconfig);
-        return EXIT_FAILURE;;
+        return EXIT_FAILURE;
     }
     else {
         yaml_item *titem;
@@ -279,7 +280,6 @@ strcpy(available_engines[engine_count++], "coraza");
                                     char test_full_id[50];
                                     sprintf(test_full_id, "%u-%u", collection->rule_id, test->test_id);
                                     int wl = qsearch(test_whitelist, test_whitelist_count, test_full_id);
-                                    //engine_runtest(engine, collection->meta.enabled, ((wl >= 0) ? 1 : 0), test->test_title, stage, debug);
                                     engine_runtest(engine, collection->meta.enabled, ((wl >= 0) ? 1 : 0), test_full_id, stage, debug, verbose);
                                 }
                             }
@@ -294,6 +294,7 @@ strcpy(available_engines[engine_count++], "coraza");
             logCbClearLog();
         }
         if (engine != NULL) {
+            failed_count = engine->cnt_failed;
             ftw_engine_free(engine);
         }
         free(tests);
@@ -307,4 +308,5 @@ strcpy(available_engines[engine_count++], "coraza");
     FTW_FREE_STRING(ftwtest_root);
     FTW_FREE_STRING(ftwengine);
     FTW_FREE_STRINGLIST(test_whitelist);
+    return failed_count;
 }

@@ -1,29 +1,28 @@
 ftwrunner
 =========
 
-Welcome to the `ftwrunner` documentation. I'ld try to show this tool to every ModSecurity users, who's interesting about the rules and its tests.
+Welcome to the `ftwrunner` documentation. I'd try to show this tool to every ModSecurity user who's interested in the rules and their tests.
 
 Motivation
 ==========
 
-I help to maintain the code of [ModSecurity](https://modsecurity.org) (especially the [libmodsecurity3](https://github.com/owasp-modsecurity/ModSecurity)). A most important goal that get the state that the [CRS](https://coreruleset.org) can work together with libmodsecurity3, without errors: false positives and not working rules.
+I help to maintain the code of [ModSecurity](https://modsecurity.org) (especially the [libmodsecurity3](https://github.com/owasp-modsecurity/ModSecurity)). The most important goal is to get the status where the [CRS](https://coreruleset.org) can work together with libmodsecurity3 without errors: false positives and not working rules.
 
-[CRS](https://github.com/coreruleset/coreruleset) has a very good tool to test all of the rules, it's called [go-ftw](https://github.com/coreruleset/go-ftw), but it works only with a supported webserver - consequently a HTTP server is required. Go-ftw uses [sets of tests](https://github.com/coreruleset/coreruleset/tree/main/tests/regression/tests), which are divided to different sections, represented the attack type. Each section has a multiple test files, which represented the rules: every file named by the rule id. And finally, all ruleset has one or more test.
+[CRS](https://github.com/coreruleset/coreruleset) has a very good tool to test all of the rules, it's called [go-ftw](https://github.com/coreruleset/go-ftw), but it works only with a supported webserver - consequently a HTTP server is required. Go-ftw uses [sets of tests](https://github.com/coreruleset/coreruleset/tree/main/tests/regression/tests), which are divided into different sections representing the attack type. Each section has multiple test files, which represented the rules: every file named by the rule id. And finally, each rules has one or more tests.
 
-These tests were written in [YAML](https://yaml.org/) format. The used schema is well documented on [ftw-tests-schema](https://github.com/coreruleset/ftw-tests-schema)
+These tests were written in [YAML](https://yaml.org/) format. The used schema is well documented on [ftw-tests-schema](https://github.com/coreruleset/ftw-tests-schema).
 
+Libmodsecurity3 has been written in C++ and - therefore as a library - has an [API](https://github.com/owasp-modsecurity/ModSecurity#simple-example-using-c). The library has an own regression test framework, but mostly it's useful to test the different functions one by one.
 
-Libmodsecurity3 has written in C++, and - therefore as a library - has an [API](https://github.com/owasp-modsecurity/ModSecurity#simple-example-using-c). The library has an own regression test framework, but mostly it's useful to tests the different functions one by one.
+As I wrote, my main goal is to adjust the libmodsecurity3 code to use those rules, so I needed a tool, which I can use to test the whole ruleset without any other external distractions, eg. webserver responses, other behaviors, etc...
 
-As I wrote, my main goal is to adjusting the libmodsecurity3 code to use those rules, so I needed a tool, which I can test with the whole ruleset without any other external distractions, eg. webserver responses, other behaviors, etc...
+At first time, I made a very ugly HTTP server, but it just generated more problems rather than solved them.
 
-At first time, I've made a very ugly HTTP server, but it just generated more problems rather than taken away them.
-
-Then the idea came - use the API, but not through the HTTP: inject the existing YAML tests to API directly.
+Then the final idea came - use the API, but not through the HTTP: inject the existing YAML tests to API directly.
 
 That is why this tool was created.
 
-In version v1.0 I added [Coraza](https://github.com/corazawaf/coraza) support too, through [libcoraza](https://github.com/corazawaf/libcoraza), and I completely rewrited the whole tool in pure C.
+In version v1.0 I added [Coraza](https://github.com/corazawaf/coraza) support too, through [libcoraza](https://github.com/corazawaf/libcoraza) and I completely rewrote the whole tool in pure C.
 
 Prerequisites
 =============
@@ -46,21 +45,21 @@ sudo apt install gcc make autotools libpcre2-dev libpcre2-8-0 libyaml-dev
 ```
 and - as I wrote above - an installed libmodsecurity3 and/or libcoraza.
 
-(Note: unfortunately libcoraza is a very beta state at the moment, and it does not work.)
+(Note: unfortunately libcoraza is a very beta status at the moment and it does not work.)
 
-*Note: Debian 10 and Debian 11 contains the libmodsecurity3 package, but since it released, there are so much modification in the code, so I **strongly suggest** that you get a clone with git, and compile it for yourself. Optionally, you can use our Debian repository: [https://modsecurity.digitalwave.hu](https://modsecurity.digitalwave.hu)*
+*Note: Debian 10 and Debian 11 contain the libmodsecurity3 package, but since it has been released, there are many modifications in the code, so I **strongly suggest** that you get a clone with git and compile it for yourself. Optionally, you can use our Debian repository: [https://modsecurity.digitalwave.hu](https://modsecurity.digitalwave.hu)*
 
 Compile the code
 ================
 
-It's simple, grab the code, and type this commands:
+It's simple: grab the code and type this commands:
 
 ```
 $ autoreconf --install
 $ ./configure
 ```
 
-At the and of `./configure`, you will get a report:
+At the and of `./configure` you will get a report:
 
 ```
 ----------------------------------------------------------------------
@@ -93,22 +92,22 @@ $ sudo make install
 
 This will be installed to /usr/local/bin directory.
 
-If everything was right, a new file created until `src/` in your project directory with name `ftwrunner`. Copy it to where you want to use, eg. to your project dir:
+If everything was right, a new file was created under `src/` in your project directory with name `ftwrunner`. Copy it where you want to use it, eg. to your project dir:
 ```
 $ cp src/ftwrunner .
 ```
 
-How does it work
-================
+How it works
+============
 
 Prepare the configuration file
 ------------------------------
 
-In the source directory, there is a configuration file, called `ftwrunner.yaml.example`. `ftwrunner` doesn't need that, but I think it helps your work. If you want to use that, make a copy from that:
+In the source directory, there is a configuration file called `ftwrunner.yaml.example`. `ftwrunner` doesn't need that, but I think it helps your work. If you want to use that, make a copy from it:
 ```
 $ cp ftwrunner.yaml.example ftwrunner.yaml
 ```
-and edit the options what you found there. Here is the content:
+and edit the options you found there. Here is the content:
 ```
 modsecurity_config: /etc/nginx/modsecurity_includes.conf
 ftwtest_root: /path/to/owasp-modsecurity-crs/util/regression-tests/tests
@@ -117,16 +116,16 @@ test_whitelist:
 - 941330-1 # know MSC bug - #2148 (double escape)
 ```
 
-If you run `ftwrunner`, it's also try to open this file first, and if it done, uses the variables. There are two mandatory variable: `modsecurity_config` and `ftwtest_root`. Both of them can be overwritten with the command line arguments. As I wrote, you don't need this file with this name, but you can pass to `ftwrunner` another one with cli argument `-c /path/to/config.yaml`.
+If you run `ftwrunner`, it tries to open this file first and if it is done, `ftwrunner` uses the variables. There are two mandatory variables: `modsecurity_config` and `ftwtest_root`. Both of them can be overwritten with the command line arguments. As I wrote, you don't need this file with this name, but you can pass to `ftwrunner` another one with cli argument `-c /path/to/config.yaml`.
 
 Content of config file
 ----------------------
 
-I suppose you use separated config files, at least your WAF config. When `ftwrunner` runs, it reads the whole config as your web server, so if your debug.log/audit.log is turned on, `ftwrunner` also wants to write it.
+I suppose you use separated config files, at least your WAF config. When `ftwrunner` runs, it reads the whole config as your web server, so if your debug.log/audit.log is turned on, `ftwrunner` also wants to write them.
 
-The best what you can do is make a single config file what you pass to `ftwrun`, and through that file the runner includes the other ones. This config file can be `modsecurity_includes.conf`.
+The best what you can do is to make a single config file you pass to `ftwrunner` and through that file the runner includes the other ones. This config file can be `modsecurity_includes.conf`.
 
-Make a copy of your `modsecurity.conf` or `coraza.conf`. Make any modifications what you want (turn on/off the logs, change the log paths, and so on.)
+Make a copy of your `modsecurity.conf` or `coraza.conf`. Make any modifications you want (turn on/off the logs, change the log paths, and so on.)
 
 Put the name of this file into `modsecurity_includes.conf`:
 
@@ -136,7 +135,7 @@ include modsecurity.conf
 include coraza.conf
 ```
 
-Then find the file which loads your CRS setup file, before and after loaders, and the rules. Put that file too into the `modsecurity_includes.conf`. Now your file looks like this:
+Then find the file which loads your CRS setup file, before and after loaders and the rules. Put that file also into the `modsecurity_includes.conf`. Now your file looks like this:
 
 ```
 $ cat modsecurity_includes.conf 
@@ -153,20 +152,20 @@ include /path/to/coreruleset/rules/*.conf
 include /path/to/crs/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
 ```
 
-**AGAIN: if you set up the debug in that config (`SecDebugLog /var/log/nginx/modsec_debug.log`), libmodsecurity3 wants to open it when it starts, so you have to give the permissions to the user what you run, or use a copy and change this variable, or turn off debug log. No, you don't want to run it as root.**
+**AGAIN: if you set up the debug in that config (`SecDebugLog /var/log/nginx/modsec_debug.log`), libmodsecurity3 wants to open it when it starts, so you have to give the permissions to the user who runs it or use a copy and change this variable or turn off debug log. No, you don't want to run it as root.**
 
-**Also please make sure if you copy your `modsecurity.conf`, that you copy the `unicode.mapping` file too.**
+**Also please make sure that you copied your `modsecurity.conf` and the `unicode.mapping` file, too.**
 
 You can overwrite the `modsecurity_config: modsecurity_include.conf` variable with cli argument `-m /path/to/config`.
 
-`ftwtest_root` - path to your regression tests root directory. It's depend on your config, version, etc... and also can be overwriten with a cli argument `-f /path/to/coreruleset/tests/regression/tests`.
+`ftwtest_root` - path to your regression tests root directory. It depends on your config, version, etc... and also can be overwriten with a cli argument `-f /path/to/coreruleset/tests/regression/tests`.
 
-Note, that it's generally useful if you don't want to run all tests in that directory, just a subset. Here is an example:
+Note that it's generally useful if you don't want to run all tests in that directory, just a subset. Here is an example:
 ```
 $ ./ftwrunner -f /path/to/coreruleset/tests/regression/tests/REQUEST-920-PROTOCOL-ENFORCEMENT/
 ```
 
-`test_whitelist` - this is **not** a mandatory option, but can be useful to lists the tests titles, what you know that will FAILED. You can place a comment after the test title with a `#`, see example:
+`test_whitelist` - this is **not** a mandatory option, but can be useful to list the tests titles that you know will be FAILED. You can place a comment after the test title with a `#`, see example:
 
 ```
 test_whitelist:
@@ -182,7 +181,7 @@ test_whitelist:
 Command line options
 --------------------
 
-With the command line options you can overwrite the two mandatory options above, and can extend the functions. See them:
+With the command line options you can overwrite the two mandatory options above and can extend the functions. See them:
 
 `-h` - gives a short help
 
@@ -217,27 +216,27 @@ this command will run the test only for rule id `942380` with test title `942380
 Output
 ------
 
-The tests runs one after one. The rules are sorted, the first test is the lower. A set of test will skipped, if the yaml file `meta` section contains `enabled: false`. In this case, you will see just this line:
+The tests run one after one. The rules are sorted, the first test is the lowest title. Sume test will be omitted if the yaml file `meta` section contains `enabled: false`. In this case, you will see just this line:
 
 ```
 920250.yaml: tests not enabled in file, skipping...
 ```
 
-Otherwise, the tests will runs.
+Otherwise, the tests will run.
 
-*Note, that this tests will not counts anywhere at final summary.*
+*Note, that these tests will not be counted anywhere at final summary.*
 
-`ftwrunner` can evaulates only those tests, which checks the error log. If the original `ftw` expects the HTTP status code or any HTTP error, then it can't catch it, so if the test output expects `status` or `expects_error`, then it will be SKIPPED. There is an another criteria to run the test: if the test input section gives `raw_request` or `encoded_request`, then test also will SKIPPED - these keywords are not implemented yet. If a test SKIPPED, then the the reason will showed.
+`ftwrunner` can evaulate only those tests, which checks the error log. If the original `ftw` expects the HTTP status code or any HTTP error, then it can't catch it, so if the test output expects `status` or `expects_error`, then it will be SKIPPED. There is an another criterium to run the test: if the test input section gives `raw_request` or `encoded_request`, then test also will be SKIPPED - these keywords are not implemented yet. If a test is SKIPPED, then the the reason will be showed.
 
 The runned tests can generate three main types of output:
 
-* SKIPPED - see criterias above; note, that the reason will showed, why test skipped
-* PASSED - if the output of request with given data matched the result(s) (eg. `log_contains` pattern found in the generated log lines, or `no_log_contains` pattern not found in that), then the test passed
+* SKIPPED - see criteria above; note, that the reason will be showed, why the test was skipped
+* PASSED - if the output of request with given data matched the result(s) (eg. `log_contains` pattern found in the generated log lines, or `no_log_contains` pattern not found in that), then the test is PASSED
 * FAILED - if none of them above
 
-There are two mutations of the results PASSED and FAILED: if a test PASSED, but you listed it in your `test_whitelist`, then the output will `PASSED - WHITELISTED`. This is important, because you will informed that the bug eliminated. You will also noticed if the test FAILED, but that's expected by a know reason, eg: `FAILED - WHITELISTED`.
+There are two mutations of the results PASSED and FAILED: if a test is PASSED, but you listed it in your `test_whitelist`, then the output will be `PASSED - WHITELISTED`. This is important, because you will be informed that the bug was eliminated. You will be also noticed if the test was FAILED, but that's expected by a known reason, eg: `FAILED - WHITELISTED`.
 
-When the all tests finished, `ftwrunner` will inform you with a summary:
+When the all tests are finished, `ftwrunner` will inform you with a summary:
 
 ```
 SUMMARY:
@@ -251,9 +250,9 @@ TOTAL:                    18
 ===============================
 ```
 
-From this table, you can see how many test was PASSED, FAILED, SKIPPED. The whitelisted failed tests will showed separately.
+From this sheet you can see how many tests were PASSED, FAILED or SKIPPED. The whitelisted failed tests will be shown separately.
 
-If there are one or more failed test, the summary will extended with the list of those:
+If there are one or more failed tests, the summary will be extended with the list of those:
 
 ```
 SUMMARY:
@@ -269,39 +268,42 @@ TOTAL:                    18
 FAILED TESTS:             944110-15, 944110-16
 ```
 
-It can helps you if you run a whole set of tests (actually it's more, that 2000), and then you can check them one by one.
+It can help you if you run a whole set of tests (actually there's more than 2000) and then you can check them one by one.
 
 Return value
 ------------
 
-When `ftwrunner` terminates, the return value will be 0 if there isn't any error or failed test. If the error occurred until the run (eg. your config file not found, can't open the debug.log, ...), the return value vill be less than 0 (usually -1). If there were one or more failed test, the return value will be greather than 0, it will the number of failed test. See the example above:
+When `ftwrunner` terminates, the return value will be 0 if there isn't any error or failed test. If the error occurred while running (eg. your config file is not found or can't open the debug.log, ...), the return value will be different from 0 (usually 1). If there were one or more failed tests, the return value will be greater than 0, it will be the number of failed tests. See the example above:
 
 ```
-$ ./ftwrunner -r 944110
+$ src/ftwrunner -e modsecurity -c ftwrunner.yaml -r 944110
 944110-1: PASSED
 ...
-SUMMARY:
+
+SUMMARY
 ===============================
-PASSED:                   14
-FAILED:                   2
-FAILED (whitelisted):     2
-SKIPPED:                  0
-DISABLED:                 0
+ENGINE:                 ModSecurity
+PASSED:                 14
+FAILED:                 4
+FAILED (whitelisted):   0
+SKIPPED:                0
+DISABLED:               0
 ===============================
-TOTAL:                    18
+TOTAL:                  18
 ===============================
-FAILED TESTS:             944110-15, 944110-16
+FAILED TESTS:
+944110-11, 944110-12, 944110-15, 944110-16
 ===============================
 $ echo $?
-2
+4
 ```
 
 Use `ftwrunner` with Valgrind
 =============================
 
-`ftwunner` can help to discover memory leaks in the library. It's highly recommended to make a minimal configuration (eg. only 1 rule) and make a test for that rule. Then you will see only the specific place where the memleak occurrs.
+`ftwunner` can help you to detect memory leaks in the library. It's highly recommended to create a minimal configuration (eg. only 1 rule) and run a test with that rule. Then you will only see the place where the memleak occurrs.
 
-Here is how do I do that.
+Here is how I do that.
 
 Create a new `ftwrunner` config:
 ```
@@ -310,7 +312,7 @@ modsecurity_config: modsecurity_valgrind.conf
 #modsecurity_config: modsecurity_temp.conf
 ftwtest_root: /home/airween/src/coreruleset/tests/regression/tests/
 ```
-Create a `new modsecurity_valgrind.conf` file in same directory:
+Create a `new modsecurity_valgrind.conf` file in the same directory:
 ```
 include modsecurity.conf
 
@@ -391,7 +393,7 @@ $ valgrind -s --track-origins=yes src/ftwrunner -e dummy -c ftwrunner-valgrind.y
 ...
 ```
 
-Theoretically you must get a `no leaks are possible` answer from Valgrind:
+In theory, you should get a `no leaks are possible` response from Valgrind:
 ```
 ...
 ==359704== 
@@ -404,13 +406,10 @@ Theoretically you must get a `no leaks are possible` answer from Valgrind:
 ==359704== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
 ```
 
-
-
-
 Reporting issues
 ================
 
-If you ran an unexpected behavior, found a bug, or have a feature request, just open an issue here, or drop an e-mail to us: modsecurity at digitalwave dot hu.
+If you experience unexpected behavior, find a bug, or need a feature, just open an issue here or write us an email: modsecurity at digitalwave dot hu.
 
 Todo
 ====
