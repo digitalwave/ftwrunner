@@ -23,9 +23,20 @@
 
 #ifdef HAVE_LIBCORAZA
 
+// error callback for coraza - captures matched rule error logs
+static void coraza_error_log_cb(void *ctx, coraza_matched_rule_t rule) {
+    (void)ctx;
+    char *error_log = coraza_matched_rule_get_error_log(rule);
+    if (error_log != NULL) {
+        logCbText(NULL, error_log);
+        free(error_log);
+    }
+}
+
 // init coraza WAF config
 void * ftw_engine_init_coraza() {
     coraza_waf_config_t config = coraza_new_waf_config();
+    coraza_add_error_callback(config, coraza_error_log_cb, NULL);
     return (void*)(uintptr_t)config;
 }
 
@@ -160,6 +171,43 @@ int ftw_engine_runtest_coraza(ftw_engine * engine, char * title, ftw_stage *stag
                 printf("%s\n", log);
             }
             free(log);
+        }
+    }
+    if (stage->output->log->expect_ids_len > 0) {
+        for(int i = 0; i < stage->output->log->expect_ids_len; i++) {
+            char idsubj[50];
+            sprintf(idsubj, "id \"%u\"", stage->output->log->expect_ids[i]);
+            log = logContains(idsubj, 0);
+            if (log != NULL) {
+                ret = FTW_TEST_PASS;
+                if (debug == 1) {
+                    printf("%s\n", log);
+                }
+                free(log);
+            }
+            else {
+                ret = FTW_TEST_FAIL;
+                if (debug == 1) {
+                    printf("Log no contains required pattern: '%s'\n", idsubj);
+                }
+            }
+        }
+    }
+    if (stage->output->log->no_expect_ids_len > 0) {
+        for(int i = 0; i < stage->output->log->no_expect_ids_len; i++) {
+            char idsubj[50];
+            sprintf(idsubj, "id \"%u\"", stage->output->log->no_expect_ids[i]);
+            log = logContains(idsubj, 1);
+            if (log == NULL) {
+                ret = FTW_TEST_PASS;
+            }
+            else {
+                ret = FTW_TEST_FAIL;
+                if (debug == 1) {
+                    printf("%s\n", log);
+                }
+                free(log);
+            }
         }
     }
 
