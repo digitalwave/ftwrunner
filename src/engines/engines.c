@@ -36,11 +36,6 @@
 #endif
 #endif
 
-#ifdef HAVE_LIBCORAZA
-#include <coraza/core.h>
-#include <coraza/utils.h>
-#endif
-
 #include "ftwcoraza/ftwcoraza.h"
 #include "ftwmodsecurity/ftwmodsecurity.h"
 #include "ftwdummy/ftwdummy.h"

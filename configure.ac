@@ -13,7 +13,7 @@ AC_PROG_CC
 # Checks for header files.
 
 AC_CHECK_HEADERS([modsecurity/modsecurity.h], [], [AC_MSG_NOTICE([unable to find header modsecurity/modsecurity.h])])
-AC_CHECK_HEADERS([coraza/core.h], [], [AC_MSG_NOTICE([unable to find header coraza/core.h])])
+AC_CHECK_HEADERS([coraza/coraza.h], [], [AC_MSG_NOTICE([unable to find header coraza/coraza.h])])
 AC_DEFINE([PCRE2_CODE_UNIT_WIDTH], [8], [Define the PCRE2 code unit width])
 AC_CHECK_HEADERS([pcre2.h], [], [AC_MSG_ERROR([unable to find header pcre2.h], 1)])
 AC_CHECK_HEADERS([yaml.h], [], [AC_MSG_ERROR([unable to find header yaml.h], 1)])
@@ -38,21 +38,21 @@ AC_CHECK_LIB([modsecurity],
              ],
              AC_MSG_NOTICE([libmodsecurity is not installed.])
 )
-AC_CHECK_LIB([corazacore],
-             [coraza_new_waf],
+AC_CHECK_LIB([coraza],
+             [coraza_new_waf_config],
              [
                  AC_DEFINE([HAVE_LIBCORAZA],
                            [1],
-                           [Define to 1 if you have the `libcorazacore' library (-lcorazacore).])
-                 AC_SUBST([LIBCORAZA_LIB], [-lcorazacore])
+                           [Define to 1 if you have the `libcoraza' library (-lcoraza).])
+                 AC_SUBST([LIBCORAZA_LIB], [-lcoraza])
                  has_coraza=yes
              ],
-             AC_MSG_NOTICE([libcorazacore is not installed.])
+             AC_MSG_NOTICE([libcoraza is not installed.])
 )
 
 AS_IF([test "x$has_modsecurity" = xno], 
     AS_IF([test "x$has_coraza" = xno],
-        [AC_MSG_ERROR([neither libmodsecurity nor libcorazacore is installed.], 1)]
+        [AC_MSG_ERROR([neither libmodsecurity nor libcoraza is installed.], 1)]
     )
 )
 
