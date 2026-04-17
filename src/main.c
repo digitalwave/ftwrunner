@@ -265,6 +265,10 @@ strcpy(available_engines[engine_count++], "coraza");
             qsort(tests, test_count, sizeof(char *), walkcmp);
             for(int i = 0; i < test_count; i++) {
                 yaml_item *yrootsub = parse_yaml(tests[i]);
+                if (yrootsub == NULL) {
+                    fprintf(stderr, "Error: failed to parse YAML file: %s\n", tests[i]);
+                    continue;
+                }
                 ftwtestcollection * collection = ftwtestcollection_new(yrootsub, rule_test, rule_test_id);
                 if (collection == NULL) {
                     fprintf(stderr, "Error parsing file %s! (Memory allocation error)\n", tests[i]);
