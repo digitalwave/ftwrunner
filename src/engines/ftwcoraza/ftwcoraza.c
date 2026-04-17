@@ -63,10 +63,11 @@ int ftw_engine_runtest_coraza(ftw_engine * engine, char * title, ftw_stage *stag
     int ret = FTW_TEST_FAIL;
 
     coraza_intervention_t *it;
-    coraza_transaction_t *transaction = NULL;
+    coraza_transaction_t transaction = 0;
+    coraza_waf_t waf = (coraza_waf_t)(uintptr_t)engine->rules;
 
     logCbClearLog();
-    transaction = coraza_new_transaction((coraza_waf_t*) engine->engine_instance, logCbText);
+    transaction = coraza_new_transaction(waf);
 
     // phase 0
     coraza_process_connection(transaction, "127.0.0.1", 33333, stage->input->dest_addr, stage->input->port);
@@ -79,6 +80,7 @@ int ftw_engine_runtest_coraza(ftw_engine * engine, char * title, ftw_stage *stag
     }
     coraza_process_uri(transaction, stage->input->uri, stage->input->method, version);
     it = coraza_intervention(transaction);
+    if (it != NULL) { coraza_free_intervention(it); }
 
     // phase 1
     for(int hi = 0; hi < stage->input->headers_len; hi++) {
@@ -92,40 +94,42 @@ int ftw_engine_runtest_coraza(ftw_engine * engine, char * title, ftw_stage *stag
     }
     coraza_add_request_header(transaction, "X-CRS-Test", 10, title, (int)strlen(title));
     coraza_process_request_headers(transaction);
-    it = coraza_intervention(transaction); // cppcheck-suppress redundantAssignment
+    it = coraza_intervention(transaction);
+    if (it != NULL) { coraza_free_intervention(it); }
 
     // phase 2
     if (stage->input->data != NULL) {
         coraza_append_request_body(transaction, (unsigned char *)stage->input->data, strlen(stage->input->data));
     }
     coraza_process_request_body(transaction);
-    it = coraza_intervention(transaction); // cppcheck-suppress redundantAssignment
+    it = coraza_intervention(transaction);
+    if (it != NULL) { coraza_free_intervention(it); }
 
     // phase 3
     char response_len[10];
-    sprintf(response_len, "%ld", stage->output->response_len); 
-    coraza_add_response_header(transaction, "Date",            4, stage->output->response_date, (int)strlen(stage->output->response_date));
+    sprintf(response_len, "%ld", stage->response->response_len);
+    if (stage->response->response_date != NULL) {
+        coraza_add_response_header(transaction, "Date", 4, stage->response->response_date, (int)strlen(stage->response->response_date));
+    }
     coraza_add_response_header(transaction, "Server",          6, "Ftwrunner", 9);
     coraza_add_response_header(transaction, "Content-Type",   12, "text/html; charset=UTF-8", 24);
     coraza_add_response_header(transaction, "Content-Length", 14, response_len, (int)strlen(response_len));
-    coraza_process_response_headers(transaction, stage->output->response_code, (char *)"HTTP/1.1");
-    it = coraza_intervention(transaction); // cppcheck-suppress redundantAssignment
+    coraza_process_response_headers(transaction, stage->response->response_code, (char *)"HTTP/1.1");
+    it = coraza_intervention(transaction);
+    if (it != NULL) { coraza_free_intervention(it); }
 
     // phase 4
-    if (stage->output->response != NULL) {
-        coraza_append_response_body(transaction, (unsigned char *)stage->output->response, stage->output->response_len);
+    if (stage->response->response_body != NULL) {
+        coraza_append_response_body(transaction, stage->response->response_body, stage->response->response_len);
     }
     coraza_process_response_body(transaction);
-    it = coraza_intervention(transaction); // cppcheck-suppress redundantAssignment
+    it = coraza_intervention(transaction);
+    if (it != NULL) { coraza_free_intervention(it); }
 
     // phase 5
     coraza_process_logging(transaction);
-    it = coraza_intervention(transaction); // cppcheck-suppress redundantAssignment
-    if (it != NULL) {
-        if (it->log != NULL) {
-            free(it->log);
-        }
-    }
+    it = coraza_intervention(transaction);
+    if (it != NULL) { coraza_free_intervention(it); }
 
     //logCbDump();
     char * log = NULL;
@@ -145,7 +149,7 @@ int ftw_engine_runtest_coraza(ftw_engine * engine, char * title, ftw_stage *stag
             }
         }
     }
-    else if (stage->output->no_log_contains != NULL) {
+    if (stage->output->no_log_contains != NULL) {
         log = logContains(stage->output->no_log_contains, 1);
         if (log == NULL) {
             ret = FTW_TEST_PASS;
@@ -159,15 +163,10 @@ int ftw_engine_runtest_coraza(ftw_engine * engine, char * title, ftw_stage *stag
         }
     }
 
-    /*if (it->url != NULL) {
-        free(it->url);
-    }
-    if (it->log != NULL) {
-        free(it->log);
-    }*/
     coraza_free_transaction(transaction);
 
     logCbDump();
+    logCbClearLog();
 
     return ret;
 }
