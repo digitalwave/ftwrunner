@@ -23,21 +23,37 @@
 
 #ifdef HAVE_LIBCORAZA
 
-// init coraza WAF
+// init coraza WAF config
 void * ftw_engine_init_coraza() {
-    coraza_waf_t *coraza = coraza_new_waf();
-    return (void*)coraza;
+    coraza_waf_config_t config = coraza_new_waf_config();
+    return (void*)(uintptr_t)config;
 }
 
-// set the rules
+// set the rules and create WAF
 void * ftw_engine_create_rules_set_coraza(void * engine_instance, char * main_rule_uri, const char ** error) {
-    coraza_rules_add_file((coraza_waf_t *) engine_instance, main_rule_uri, (char **)error);
-    return NULL;
+    coraza_waf_config_t config = (coraza_waf_config_t)(uintptr_t)engine_instance;
+
+    if (coraza_rules_add_file(config, main_rule_uri) < 0) {
+        *error = "failed to add rules file";
+        coraza_free_waf_config(config);
+        return NULL;
+    }
+
+    char *waf_error = NULL;
+    coraza_waf_t waf = coraza_new_waf(config, &waf_error);
+    coraza_free_waf_config(config);
+
+    if (waf == 0) {
+        *error = waf_error ? waf_error : "failed to create WAF";
+        return NULL;
+    }
+
+    return (void*)(uintptr_t)waf;
 }
 
 // cleanup the resources
 void ftw_engine_cleanup_coraza(void * waf) {
-    coraza_free_waf((coraza_waf_t *)waf);
+    coraza_free_waf((coraza_waf_t)(uintptr_t)waf);
 }
 
 // run a transaction
