@@ -378,7 +378,13 @@ void ftw_engine_show_result(const ftw_engine * engine) {
     printf("\n");
     printf("SUMMARY\n");
     printf("===============================\n");
-    printf("ENGINE:                 %s\n", engine->engine_type == FTW_ENGINE_TYPE_DUMMY ? "Dummy" : "ModSecurity");
+    const char *engine_name = "Unknown";
+    switch(engine->engine_type) {
+        case FTW_ENGINE_TYPE_DUMMY:        engine_name = "Dummy"; break;
+        case FTW_ENGINE_TYPE_MODSECURITY:  engine_name = "ModSecurity"; break;
+        case FTW_ENGINE_TYPE_CORAZA:       engine_name = "Coraza"; break;
+    }
+    printf("ENGINE:                 %s\n", engine_name);
     printf("PASSED:                 %d\n", engine->cnt_passed);
     printf("FAILED:                 %d\n", engine->cnt_failed);
     printf("FAILED (whitelisted):   %d\n", engine->cnt_failedwl);
