@@ -360,7 +360,7 @@ void ftw_engine_free(ftw_engine * engine) {
 #ifdef HAVE_LIBCORAZA
             case FTW_ENGINE_TYPE_CORAZA:
                 if (engine->rules != NULL) {
-                    coraza_free_waf((coraza_waf_t)(uintptr_t)engine->rules);
+                    coraza_free_waf((coraza_waf_t)engine->rules);
                 }
                 free(engine);
                 break;

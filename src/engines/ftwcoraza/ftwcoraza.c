@@ -37,12 +37,12 @@ static void coraza_error_log_cb(void *ctx, coraza_matched_rule_t rule) {
 void * ftw_engine_init_coraza() {
     coraza_waf_config_t config = coraza_new_waf_config();
     coraza_add_error_callback(config, coraza_error_log_cb, NULL);
-    return (void*)(uintptr_t)config;
+    return (void*)config;
 }
 
 // set the rules and create WAF
 void * ftw_engine_create_rules_set_coraza(void * engine_instance, char * main_rule_uri, const char ** error) {
-    coraza_waf_config_t config = (coraza_waf_config_t)(uintptr_t)engine_instance;
+    coraza_waf_config_t config = (coraza_waf_config_t)engine_instance;
 
     if (coraza_rules_add_file(config, main_rule_uri) < 0) {
         *error = "failed to add rules file";
@@ -59,12 +59,12 @@ void * ftw_engine_create_rules_set_coraza(void * engine_instance, char * main_ru
         return NULL;
     }
 
-    return (void*)(uintptr_t)waf;
+    return (void*)waf;
 }
 
 // cleanup the resources
 void ftw_engine_cleanup_coraza(void * waf) {
-    coraza_free_waf((coraza_waf_t)(uintptr_t)waf);
+    coraza_free_waf((coraza_waf_t)waf);
 }
 
 // run a transaction
@@ -75,7 +75,7 @@ int ftw_engine_runtest_coraza(ftw_engine * engine, char * title, ftw_stage *stag
 
     coraza_intervention_t *it;
     coraza_transaction_t transaction = 0;
-    coraza_waf_t waf = (coraza_waf_t)(uintptr_t)engine->rules;
+    coraza_waf_t waf = (coraza_waf_t)engine->rules;
 
     logCbClearLog();
     transaction = coraza_new_transaction(waf);
