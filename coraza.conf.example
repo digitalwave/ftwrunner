@@ -1,0 +1,4 @@
+SecRuleEngine On
+SecRequestBodyAccess On
+SecResponseBodyAccess On
+SecResponseBodyMimeType text/plain text/html text/xml application/json

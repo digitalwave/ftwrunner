@@ -1,0 +1,2 @@
+modsecurity_config: coraza_includes.conf
+ftwtest_root: /path/to/coreruleset/tests/regression/tests
