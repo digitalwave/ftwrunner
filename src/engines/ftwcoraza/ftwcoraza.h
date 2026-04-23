@@ -25,8 +25,7 @@
 #define FTW_ENGINE_CORAZA
 #ifdef HAVE_LIBCORAZA
 
-#include <coraza/core.h>
-#include <coraza/utils.h>
+#include <coraza/coraza.h>
 
 #define N_INTERVENTION_STATUS 200
 

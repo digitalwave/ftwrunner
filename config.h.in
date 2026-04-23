@@ -1,12 +1,12 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to 1 if you have the <coraza/core.h> header file. */
-#undef HAVE_CORAZA_CORE_H
+/* Define to 1 if you have the <coraza/coraza.h> header file. */
+#undef HAVE_CORAZA_CORAZA_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the `libcorazacore' library (-lcorazacore). */
+/* Define to 1 if you have the `libcoraza' library (-lcoraza). */
 #undef HAVE_LIBCORAZA
 
 /* Define to 1 if you have the 'yaml' library (-lyaml). */

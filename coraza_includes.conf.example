@@ -1,0 +1,5 @@
+include coraza.conf
+include /path/to/coreruleset/crs-setup.conf.example
+include /path/to/coreruleset/plugins/empty-before.conf
+include /path/to/coreruleset/rules/*.conf
+include /path/to/coreruleset/plugins/empty-after.conf

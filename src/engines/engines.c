@@ -36,11 +36,6 @@
 #endif
 #endif
 
-#ifdef HAVE_LIBCORAZA
-#include <coraza/core.h>
-#include <coraza/utils.h>
-#endif
-
 #include "ftwcoraza/ftwcoraza.h"
 #include "ftwmodsecurity/ftwmodsecurity.h"
 #include "ftwdummy/ftwdummy.h"
@@ -364,8 +359,8 @@ void ftw_engine_free(ftw_engine * engine) {
 #endif
 #ifdef HAVE_LIBCORAZA
             case FTW_ENGINE_TYPE_CORAZA:
-                if (engine->engine_instance != NULL) {
-                    coraza_free_waf((coraza_waf_t *)engine->engine_instance);
+                if (engine->rules != NULL) {
+                    coraza_free_waf((coraza_waf_t)engine->rules);
                 }
                 free(engine);
                 break;
@@ -383,7 +378,13 @@ void ftw_engine_show_result(const ftw_engine * engine) {
     printf("\n");
     printf("SUMMARY\n");
     printf("===============================\n");
-    printf("ENGINE:                 %s\n", engine->engine_type == FTW_ENGINE_TYPE_DUMMY ? "Dummy" : "ModSecurity");
+    const char *engine_name = "Unknown";
+    switch(engine->engine_type) {
+        case FTW_ENGINE_TYPE_DUMMY:        engine_name = "Dummy"; break;
+        case FTW_ENGINE_TYPE_MODSECURITY:  engine_name = "ModSecurity"; break;
+        case FTW_ENGINE_TYPE_CORAZA:       engine_name = "Coraza"; break;
+    }
+    printf("ENGINE:                 %s\n", engine_name);
     printf("PASSED:                 %d\n", engine->cnt_passed);
     printf("FAILED:                 %d\n", engine->cnt_failed);
     printf("FAILED (whitelisted):   %d\n", engine->cnt_failedwl);
